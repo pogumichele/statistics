@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STATISTIC - Michele Pogu</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* Stile base */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+            color: #00ff00;
+            background-color: #0d1a0d;
+            overflow-x: hidden;
+        }
+
+        /* Sfondo binario */
+        .binary-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.05;
+            filter: blur(0.5px);
+            transform: scale(1.05);
+        }
+        
+        .binary-background span {
+            position: absolute;
+            white-space: pre;
+            line-height: 15px;
+            font-size: 15px;
+            color: #00cc00;
+            animation: flow 15s linear infinite;
+        }
+        
+        @keyframes flow {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+
+        /* Contenuto principale al centro */
+        .content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        /* Stile del titolo */
+        .title {
+            font-size: 4em;
+            margin-bottom: 20px;
+            color: #39ff14;
+            text-shadow: 0 0 10px #39ff14, 0 0 20px #39ff14;
+        }
+
+        /* Stile per i dati dello studente */
+        .student-data {
+             width: 100%;
+             max-width: 800px;
+             margin-bottom: 40px;
+             padding: 10px;
+        }
+
+        .student-data .name-row {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .student-data .name-row p {
+             flex: 1; 
+             margin: 5px 10px 5px 0; 
+             text-align: left;
+        }
+        
+        .student-data .name-row p:last-child {
+            margin-right: 0;
+        }
+
+        .student-data p {
+            margin: 5px 0;
+            font-size: 1.2em;
+            text-align: left;
+        }
+        
+        /* Contenitore generale degli homework */
+        #homework-container {
+            width: 90%;
+            max-width: 800px;
+            text-align: left;
+            margin-top: 20px;
+        }
+        
+        /* Stile del TITOLO DELL'HOMEWORK (cliccabile) */
+        .homework-header {
+            background-color: rgba(0, 50, 0, 0.9);
+            padding: 15px 20px;
+            border: 2px solid #39ff14;
+            color: #39ff14;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
+            margin-top: 15px;
+            transition: background-color 0.3s;
+        }
+
+        .homework-header:hover {
+            background-color: rgba(0, 70, 0, 0.9);
+        }
+        
+        /* Stile per l'icona di espansione */
+        .expand-icon {
+            font-size: 1.2em;
+            transition: transform 0.3s;
+            margin-left: 10px;
+        }
+
+        /* Rotazione dell'icona quando il contenuto è mostrato */
+        .homework-header[aria-expanded="true"] .expand-icon {
+            transform: rotate(90deg);
+        }
+        
+        /* Stile del CONTENUTO DELL'HOMEWORK (inizialmente nascosto) */
+        .homework-content {
+            padding: 20px;
+            border: 2px solid #00ff00;
+            border-top: none;
+            background-color: rgba(0, 50, 0, 0.85);
+            color: #e0ffe0;
+            display: none;
+            box-shadow: 0 5px 10px rgba(0, 255, 0, 0.2);
+            overflow-x: auto;
+        }
+
+        .homework-content h3 {
+             color: #00ff00;
+             margin-top: 20px;
+             font-size: 1.3em;
+        }
+        
+        .homework-content h4 {
+             color: #00ff00;
+             margin-top: 15px;
+             font-size: 1.1em;
+        }
+        
+        .homework-content ul {
+            list-style-type: '⚡ ';
+            margin-left: 20px;
+        }
+
+        /* Stile per le tabelle nel contenuto */
+        .homework-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            color: #e0ffe0;
+            border: 1px solid #00ff00;
+        }
+
+        .homework-content th, .homework-content td {
+            border: 1px solid #00ff00;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .homework-content th {
+            background-color: rgba(0, 70, 0, 0.9);
+            color: #39ff14;
+        }
+
+        .homework-content p strong {
+             color: #39ff14;
+        }
+        
+        /* Stile per l'area del grafico */
+        .chart-container {
+            width: 90%; /* Occupa più spazio */
+            max-width: 500px; /* Limita la dimensione massima */
+            margin: 30px auto;
+            background-color: #0d1a0d;
+            padding: 10px;
+            border: 1px dashed #00ff00;
+        }
+    </style>
+    </head>
+<body>
+    <div class="binary-background"></div>
+
+    <div class="content">
+        <h1 class="title">STATISTIC</h1>
+
+        <div class="student-data">
+            <div class="name-row">
+                <p><strong>First Name:</strong> Michele</p>
+                <p><strong>Last Name:</strong> Pogu</p>
+            </div>
+            <p><strong>ID:</strong> 2254529</p>
+            <p><strong>Course:</strong> Cybersecurity</p>
+        </div>
+
+        <div id="homework-container">
+
+            <div class="homework-header" data-target="homework1-content" aria-expanded="false" tabindex="0">
+                <a href="statistica.html" class="custom-button"> <span>Assignment 1: Statistics and Cybersecurity</span> </a>
+                <span class="expand-icon">></span>
+            </div>
+            <div id="homework1-content" class="homework-content">
+                <h3>What is Statistics, and why can it be useful for Cybersecurity?</h3>
+
+                <p><strong>What is Statistics?</strong></p>
+                <p>Statistics is the science concerned with the <strong>collection, analysis, interpretation, and presentation</strong> of data. It transforms raw data into **meaningful information** used to make informed decisions and draw reliable conclusions about complex phenomena.</p>
+
+                <p>It is divided into two main branches:</p>
+                <ul>
+                    <li><strong>Descriptive Statistics:</strong> Summarizes and describes a data set (e.g., mean, median, graphs).</li>
+                    <li><strong>Inferential Statistics:</strong> Uses data from a sample to draw conclusions or make predictions (inferences) about a larger population.</li>
+                </ul>
+
+                <hr style="border-top: 1px dashed #00ff00; margin: 20px 0;">
+
+                <p><strong>Why is Statistics Useful for Cybersecurity?</strong></p>
+                <p>Statistics is the **engine that powers threat detection** by distinguishing the normal **"noise"** from the malicious **"signal"** on a network. Its utility focuses on three main areas:</p>
+                
+                <h4>1. Anomaly and Threat Detection</h4>
+                <ul>
+                    <li>**Baseline Establishment:** It sets a statistical "profile" of normal network behavior.</li>
+                    <li>**Deviation Identification:** Security systems (like IDS) use statistical measures (like standard deviation) to flag activities that significantly deviate from the norm, indicating potential attacks (e.g., unusual login attempts, mass file access).</li>
+                </ul>
+
+                <h4>2. Risk Assessment and Prediction</h4>
+                <ul>
+                    <li>**Risk Scoring:** Vulnerabilities and events receive scores based on models that weigh **historical frequency** and **potential impact**, helping prioritize security efforts.</li>
+                    <li>**Predictive Modeling:** Statistical analysis of past trends helps forecast the **probability** of future attacks, allowing for proactive defense.</li>
+                </ul>
+                
+                <h4>3. Security Operations Management</h4>
+                <ul>
+                    <li>**System Performance:** It measures the **sensitivity** and **specificity** of defense systems (true positives vs. false positives) to ensure optimal calibration and reduce alert fatigue.</li>
+                    <li>**Forensic Analysis:** Used post-incident to reconstruct events by calculating the **probability** of attack paths.</li>
+                </ul>
+            </div>
+
+            <div class="homework-header" data-target="homework2-content" aria-expanded="false" tabindex="0">
+                <a href="statistica.html" class="custom-button"> <span>Assignment 2: Dataset, Distribution, and Visualisation</span>  </a>
+                <span class="expand-icon">></span>
+            </div>
+            <div id="homework2-content" class="homework-content">
+                <h3>Explain the concept of Dataset and Distribution.</h3>
+
+                <h4>Dataset</h4>
+                <p>A **Dataset** is a structured collection of data. It is typically organized in a tabular format (like a database table), where **Rows** represent the **Statistical Units** (observations) and **Columns** represent the **Variables** (features) being measured.</p>
+                
+                <h4>Distribution</h4>
+                <p>A **Statistical Distribution** describes how the values of a variable are **spread out** across the entire dataset. It is a way of summarizing the data to show which values are possible and how often (with what frequency) each value appears.</p>
+
+                <hr style="border-top: 1px dashed #00ff00; margin: 20px 0;">
+                
+                <h3>Practical Application Example (Univariate and Bivariate)</h3>
+                
+                <h4>A. Sample Dataset ($N=10$)</h4>
+                <table>
+                    <thead>
+                        <tr><th>ID</th><th>$V_1$: Age</th><th>$V_2$: Major</th><th>$V_3$: Score</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>20</td><td>Cyber</td><td>85</td></tr>
+                        <tr><td>2</td><td>21</td><td>Data</td><td>90</td></tr>
+                        <tr><td>3</td><td>20</td><td>Cyber</td><td>75</td></tr>
+                        <tr><td>4</td><td>22</td><td>Data</td><td>85</td></tr>
+                        <tr><td>5</td><td>21</td><td>Cyber</td><td>90</td></tr>
+                        <tr><td>6</td><td>20</td><td>Info</td><td>80</td></tr>
+                        <tr><td>7</td><td>22</td><td>Cyber</td><td>95</td></tr>
+                        <tr><td>8</td><td>21</td><td>Info</td><td>75</td></tr>
+                        <tr><td>9</td><td>20</td><td>Data</td><td>85</td></tr>
+                        <tr><td>10</td><td>22</td><td>Info</td><td>80</td></tr>
+                    </tbody>
+                </table>
+
+                <h4>B. Bivariate Distribution (Major vs. Score)</h4>
+                <p><strong>Contingency Table</strong>: Shows the joint frequency of observations.</p>
+                <table>
+                    <thead>
+                        <tr><th></th><th>Score 75</th><th>Score 80</th><th>Score 85</th><th>Score 90</th><th>Score 95</th><th>Row Total</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Cyber</strong></td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td><td><strong>4</strong></td></tr>
+                        <tr><td><strong>Data</strong></td><td>0</td><td>0</td><td>2</td><td>2</td><td>0</td><td><strong>4</strong></td></tr>
+                        <tr><td><strong>Info</strong></td><td>1</td><td>2</td><td>0</td><td>0</td><td>0</td><td><strong>3</strong></td></tr>
+                        <tr><td><strong>Col Total</strong></td><td><strong>2</strong></td><td><strong>2</strong></td><td><strong>3</strong></td><td><strong>3</strong></td><td><strong>1</strong></td><td><strong>$N=10$</strong></td></tr>
+                    </tbody>
+                </table>
+
+                <hr style="border-top: 1px dashed #00ff00; margin: 20px 0;">
+
+                <h3>C. Data Visualisation</h3>
+                
+                <h4>1. Distribution of Majors (Bar Chart)</h4>
+                <div class="chart-container">
+                    <canvas id="majorChart"></canvas>
+                </div>
+
+                <h4>2. Distribution of Scores (Pie Chart)</h4>
+                <div class="chart-container">
+                    <canvas id="scoreChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Variabili globali per tenere traccia se i grafici sono stati inizializzati
+        window.majorChart = null;
+        window.scoreChart = null;
+        
+        // Logica per lo sfondo binario
+        document.addEventListener('DOMContentLoaded', () => {
+            const binaryBackground = document.querySelector('.binary-background');
+            const cols = Math.floor(window.innerWidth / 15);
+
+            for (let i = 0; i < cols; i++) {
+                const span = document.createElement('span');
+                let binaryString = '';
+                for (let j = 0; j < 60; j++) {
+                    binaryString += Math.round(Math.random());
+                }
+                span.textContent = binaryString;
+                span.style.left = `${i * 15}px`;
+                span.style.animationDelay = `${Math.random() * 5}s`;
+                span.style.animationDuration = `${5 + Math.random() * 10}s`; 
+                binaryBackground.appendChild(span);
+            }
+            
+            // Logica per l'espansione/collasso degli homework
+            const homeworkHeaders = document.querySelectorAll('.homework-header');
+
+            homeworkHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    const targetId = header.getAttribute('data-target');
+                    const targetContent = document.getElementById(targetId);
+                    
+                    const isExpanded = header.getAttribute('aria-expanded') === 'true';
+
+                    if (isExpanded) {
+                        // Nascondi
+                        targetContent.style.display = 'none';
+                        header.setAttribute('aria-expanded', 'false');
+                    } else {
+                        // Mostra
+                        targetContent.style.display = 'block';
+                        header.setAttribute('aria-expanded', 'true');
+
+                        // Inizializza i grafici solo se è l'homework 2
+                        if (targetId === 'homework2-content') {
+                            // Se non sono ancora stati creati, li creiamo
+                            if (!window.majorChart) initMajorChart();
+                            if (!window.scoreChart) initScoreChart();
+                            
+                            // A volte Chart.js ha bisogno di un aggiornamento esplicito
+                            // dopo che l'elemento diventa visibile.
+                            if (window.majorChart) window.majorChart.update();
+                            if (window.scoreChart) window.scoreChart.update();
+                        }
+                    }
+                });
+            });
+            
+            // Funzione per inizializzare il grafico a barre (Majors)
+            function initMajorChart() {
+                const ctx = document.getElementById('majorChart').getContext('2d');
+                window.majorChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Cyber', 'Data', 'Info'],
+                        datasets: [{
+                            label: 'Number of Students',
+                            data: [4, 3, 3], // Frequenze assolute
+                            backgroundColor: [
+                                'rgba(57, 255, 20, 0.8)', // Neon Green
+                                'rgba(0, 255, 255, 0.8)', // Cyan
+                                'rgba(255, 20, 147, 0.8)'  // Neon Pink
+                            ],
+                            borderColor: '#39ff14',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#00ff00',
+                                    font: { family: 'Courier New' }
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Distribution of Majors',
+                                color: '#00ff00',
+                                font: { family: 'Courier New', size: 16 }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { color: '#00ff00', font: { family: 'Courier New' } },
+                                grid: { color: 'rgba(0, 255, 0, 0.2)' }
+                            },
+                            x: {
+                                ticks: { color: '#00ff00', font: { family: 'Courier New' } },
+                                grid: { color: 'rgba(0, 255, 0, 0.2)' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Funzione per inizializzare il grafico a torta (Scores)
+            function initScoreChart() {
+                const ctx = document.getElementById('scoreChart').getContext('2d');
+                window.scoreChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['75', '80', '85', '90', '95'],
+                        datasets: [{
+                            data: [2, 2, 3, 2, 1], // Frequenze assolute
+                            backgroundColor: [
+                                'rgba(57, 255, 20, 0.8)',   // Neon Green
+                                'rgba(0, 255, 255, 0.8)',   // Cyan
+                                'rgba(255, 20, 147, 0.8)',  // Neon Pink
+                                'rgba(255, 255, 0, 0.8)',   // Yellow
+                                'rgba(100, 100, 255, 0.8)'  // Light Blue
+                            ],
+                            borderColor: '#39ff14',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#00ff00',
+                                    font: { family: 'Courier New' }
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Distribution of Scores',
+                                color: '#00ff00',
+                                font: { family: 'Courier New', size: 16 }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+    </body>
+</html>

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Statistica</title>
+    <style>
+ /* Stile base */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+            color: #00ff00;
+            background-color: #0d1a0d;
+            overflow-x: hidden;
+        }
+
+        /* Sfondo binario */
+        .binary-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.05;
+            filter: blur(0.5px);
+            transform: scale(1.05);
+        }
+        
+        .binary-background span {
+            position: absolute;
+            white-space: pre;
+            line-height: 15px;
+            font-size: 15px;
+            color: #00cc00;
+            animation: flow 15s linear infinite;
+        }
+        
+        @keyframes flow {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+
+        /* Contenuto principale al centro */
+        .content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        /* Stile del titolo */
+        .title {
+            font-size: 4em;
+            margin-bottom: 20px;
+            color: #39ff14;
+            text-shadow: 0 0 10px #39ff14, 0 0 20px #39ff14;
+        }
+
+        /* Stile per i dati dello studente */
+        .student-data {
+             width: 100%;
+             max-width: 800px;
+             margin-bottom: 40px;
+             padding: 10px;
+        }
+
+        .student-data .name-row {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .student-data .name-row p {
+             flex: 1; 
+             margin: 5px 10px 5px 0; 
+             text-align: left;
+        }
+        
+        .student-data .name-row p:last-child {
+            margin-right: 0;
+        }
+
+        .student-data p {
+            margin: 5px 0;
+            font-size: 1.2em;
+            text-align: left;
+        }
+        
+        /* Contenitore generale degli homework */
+        #homework-container {
+            width: 90%;
+            max-width: 800px;
+            text-align: left;
+            margin-top: 20px;
+        }
+        
+        /* Stile del TITOLO DELL'HOMEWORK (cliccabile) */
+        .homework-header {
+            background-color: rgba(0, 50, 0, 0.9);
+            padding: 15px 20px;
+            border: 2px solid #39ff14;
+            color: #39ff14;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
+            margin-top: 15px;
+            transition: background-color 0.3s;
+        }
+
+        .homework-header:hover {
+            background-color: rgba(0, 70, 0, 0.9);
+        }
+        
+        /* Stile per l'icona di espansione */
+        .expand-icon {
+            font-size: 1.2em;
+            transition: transform 0.3s;
+            margin-left: 10px;
+        }
+
+        /* Rotazione dell'icona quando il contenuto è mostrato */
+        .homework-header[aria-expanded="true"] .expand-icon {
+            transform: rotate(90deg);
+        }
+        
+        /* Stile del CONTENUTO DELL'HOMEWORK (inizialmente nascosto) */
+        .homework-content {
+            padding: 20px;
+            border: 2px solid #00ff00;
+            border-top: none;
+            background-color: rgba(0, 50, 0, 0.85);
+            color: #e0ffe0;
+            display: none;
+            box-shadow: 0 5px 10px rgba(0, 255, 0, 0.2);
+            overflow-x: auto;
+        }
+
+        .homework-content h3 {
+             color: #00ff00;
+             margin-top: 20px;
+             font-size: 1.3em;
+        }
+        
+        .homework-content h4 {
+             color: #00ff00;
+             margin-top: 15px;
+             font-size: 1.1em;
+        }
+        
+        .homework-content ul {
+            list-style-type: '⚡ ';
+            margin-left: 20px;
+        }
+
+        /* Stile per le tabelle nel contenuto */
+        .homework-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            color: #e0ffe0;
+            border: 1px solid #00ff00;
+        }
+
+        .homework-content th, .homework-content td {
+            border: 1px solid #00ff00;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .homework-content th {
+            background-color: rgba(0, 70, 0, 0.9);
+            color: #39ff14;
+        }
+
+        .homework-content p strong {
+             color: #39ff14;
+        }
+        
+        /* Stile per l'area del grafico */
+        .chart-container {
+            width: 90%; /* Occupa più spazio */
+            max-width: 500px; /* Limita la dimensione massima */
+            margin: 30px auto;
+            background-color: #0d1a0d;
+            padding: 10px;
+            border: 1px dashed #00ff00;
+        }
+</style>
+
+</head>
+<body>
+<div class="content">
+<h1 class="title">HOMEWORK 1</h1>
+<div class="student-data">
+<div class="name-row">
+<p><strong>First Name:</strong> Michele</p>
+<p><strong>Last Name:</strong> Pogu</p>
+</div>
+<p><strong>ID:</strong> 2254529</p>
+<p><strong>Course:</strong> Cybersecurity</p>
+</div>
+
+<h4>What is Statistics?</h4>
+    <p>
+      Statistics is a scientific discipline that focuses on the systematic collection, organization, analysis, interpretation, and presentation of data.
+      Its primary purpose is to convert raw data into meaningful information, enabling individuals and organizations to make informed decisions and understand complex phenomena.
+    </p>
+    
+    <p>This field is divided into two main branches:</p>
+    <ul>
+      <li>
+        <strong>Descriptive Statistics</strong>: Summarizes and describes the characteristics of a dataset using numerical measures (such as mean, median, and standard deviation) and visual tools (like charts and graphs).
+      </li>
+      <li>
+        <strong>Inferential Statistics</strong>: Allows us to make predictions or generalizations about a larger population based on data collected from a sample. It uses probability theory to estimate uncertainty and assess the reliability of conclusions.
+      </li>
+    </ul>
+    
+    <p>
+      Statistics is not just about numbers—it’s about extracting insights, identifying patterns, and supporting decision-making in various domains,
+      including cybersecurity, healthcare, economics, and social sciences.
+    </p>
+    <h4>Why is Statistics Useful for Cybersecurity?</h4>
+    <p>
+      Statistics is a cornerstone of modern cybersecurity because it provides the analytical framework needed to understand, monitor, and protect complex digital environments.
+      In a world where systems generate massive volumes of data every second—from network traffic and system logs to user activity and threat alerts—statistical methods allow security professionals to extract meaningful insights, detect anomalies, and make informed decisions.
+    </p>
+    
+    <p>
+      Cybersecurity is not just about reacting to threats; it's about anticipating them, evaluating their potential impact, and continuously improving defenses.
+      Statistics enables this proactive approach by offering tools to model behavior, quantify risk, and measure the effectiveness of security systems.
+    </p>
+    
+    <p>Here are the key ways statistics contributes to cybersecurity:</p>
+    <ul>
+      <li>
+        <strong>1. Anomaly and Threat Detection</strong><br>
+        Statistical techniques help define what “normal” behavior looks like in a system or network. Once a baseline is established, deviations from this norm—such as unusual login times, unexpected data transfers, or spikes in traffic—can be flagged as potential threats.
+        Methods like standard deviation, clustering, and outlier detection are used in intrusion detection systems (IDS) and machine learning models to identify suspicious activity in real time.
+      </li>
+      <li>
+        <strong>2. Risk Assessment and Prioritization</strong><br>
+        Not all vulnerabilities are equal. Statistics allows organizations to assign risk scores to assets, users, or events based on historical data, probability of exploitation, and potential impact.
+        This helps prioritize mitigation efforts and allocate resources efficiently, focusing on the most critical threats first.
+      </li>
+      <li>
+        <strong>3. Predictive Modeling</strong><br>
+        By analyzing past incidents and trends, statistical models can forecast future attack patterns. Techniques like regression analysis and time series forecasting help anticipate when and how threats might emerge, enabling proactive defense strategies.
+        For example, if data shows that phishing attacks spike during certain periods, organizations can prepare targeted awareness campaigns in advance.
+      </li>
+      <li>
+        <strong>4. Evaluation of Security System Performance</strong><br>
+        Statistics is essential for measuring how well security tools perform. Metrics such as sensitivity (true positive rate), specificity (true negative rate), precision, recall, and false positive rate help assess the accuracy of detection systems.
+        These evaluations guide system tuning to reduce alert fatigue and improve threat detection.
+      </li>
+      <li>
+        <strong>5. Incident Response and Forensics</strong><br>
+        After a breach occurs, statistical analysis helps reconstruct the timeline of events, identify the attack vector, and estimate the likelihood of different scenarios.
+        This supports forensic investigations and strengthens future incident response plans.
+      </li>
+      <li>
+        <strong>6. Behavioral Analytics and Insider Threat Detection</strong><br>
+        Statistics enables the profiling of user behavior over time. By analyzing patterns in login frequency, access locations, file usage, and device interactions, systems can detect deviations that may indicate compromised accounts or insider threats.
+        Behavioral analytics powered by statistical models are increasingly used in zero-trust architectures.
+      </li>
+      <li>
+        <strong>7. Optimization of Security Operations</strong><br>
+        Security teams deal with thousands of alerts daily. Statistical prioritization helps filter noise and focus on high-risk events. It also supports automation by feeding reliable data into decision engines, reducing manual workload and response time.
+      </li>
+    </ul>
+    
+    <p>
+      In conclusion, statistics transforms raw cybersecurity data into actionable intelligence. It empowers organizations to move from reactive defense to predictive and adaptive security strategies.
+      As cyber threats evolve in complexity and scale, the role of statistics becomes increasingly vital—not only for detection and prevention, but also for strategic planning, compliance, and resilience.
+    </p>
+
+</body>
+</html>
