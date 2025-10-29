@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homework 3: RSA Exposed</title>
+    <style>
+        /* Stile base (da homework2.html) */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+            color: #00ff00;
+            background-color: #0d1a0d;
+            overflow-x: hidden;
+        }
+
+        /* Sfondo binario (da homework2.html) */
+        .binary-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.05;
+            filter: blur(0.5px);
+            transform: scale(1.05);
+        }
+        
+        .binary-background span {
+            position: absolute;
+            white-space: pre;
+            line-height: 15px;
+            font-size: 15px;
+            color: #00cc00;
+            animation: flow 15s linear infinite;
+        }
+        
+        @keyframes flow {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+
+        /* Contenuto principale al centro (da homework2.html) */
+        .content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        /* Stile del titolo (da homework2.html) */
+        .title {
+            font-size: 3em; /* Leggermente più piccolo per testo lungo */
+            margin-bottom: 20px;
+            color: #39ff14;
+            text-shadow: 0 0 10px #39ff14, 0 0 20px #39ff14;
+        }
+
+        /* Stili per il contenuto (Nuovi/Adattati) */
+        h2 {
+            font-size: 2.5em;
+            color: #00ff00;
+            text-shadow: 0 0 5px #00ff00;
+            margin-top: 40px;
+            width: 90%;
+            max-width: 900px;
+            text-align: left;
+        }
+
+        h3 {
+            font-size: 1.8em;
+            color: #39ff14;
+            border-bottom: 1px dashed #39ff14;
+            padding-bottom: 5px;
+            margin-top: 30px;
+            text-align: left;
+            width: 90%;
+            max-width: 900px;
+        }
+        
+        h4 {
+             color: #00ff00;
+             margin-top: 15px;
+             font-size: 1.3em;
+             text-align: left;
+             width: 90%;
+             max-width: 900px;
+        }
+
+        p, ul {
+            width: 90%;
+            max-width: 900px;
+            margin: 15px auto;
+            text-align: left;
+            line-height: 1.6;
+            font-size: 1.1em;
+        }
+        
+        ul {
+            list-style-type: '⚡ ';
+            margin-left: 20px;
+        }
+
+        strong {
+            color: #39ff14;
+        }
+
+        code {
+            background-color: rgba(0, 50, 0, 0.7);
+            padding: 2px 5px;
+            border: 1px solid #00cc00;
+            color: #e0ffe0;
+        }
+
+        /* Stili per la simulazione (Nuovi) */
+        .simulation-container {
+            width: 90%;
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: rgba(0, 30, 0, 0.8);
+            border: 3px double #39ff14;
+            box-shadow: 0 0 15px rgba(57, 255, 20, 0.8);
+            text-align: left;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #00ff00;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .input-group input[type="number"],
+        .input-group textarea {
+            width: 98%;
+            padding: 10px;
+            background-color: #0d1a0d;
+            border: 1px solid #00ff00;
+            color: #39ff14;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.1em;
+            resize: vertical;
+        }
+        
+        .input-group textarea {
+            height: 120px;
+        }
+        
+        .input-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .input-row .input-group {
+            flex: 1;
+        }
+
+        button {
+            background-color: #39ff14;
+            color: #0d1a0d;
+            border: none;
+            padding: 12px 25px;
+            font-weight: bold;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s, box-shadow 0.3s;
+            border-radius: 4px;
+            box-shadow: 0 0 8px #39ff14;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #00cc00;
+            box-shadow: 0 0 15px #00cc00;
+        }
+
+        .results-box {
+            margin-top: 25px;
+            padding: 15px;
+            border: 2px dashed #00cc00;
+            background-color: rgba(0, 50, 0, 0.7);
+            color: #e0ffe0;
+        }
+
+        .results-box h4 {
+            color: #39ff14;
+            margin-top: 0;
+            font-size: 1.2em;
+            width: 100%;
+        }
+        
+        .results-box pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #e0ffe0;
+            font-size: 1.1em;
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: #0d1a0d;
+            padding: 10px;
+            border: 1px solid #00ff00;
+        }
+        
+        .error-message {
+            color: #ff3333;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ff3333;
+            background-color: rgba(100, 0, 0, 0.5);
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Sfondo binario (da homework2.html) -->
+    <div class="binary-background" id="binary-bg"></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const bg = document.getElementById('binary-bg');
+            if (!bg) return;
+            const columns = Math.floor(window.innerWidth / 15);
+            for (let i = 0; i < columns; i++) {
+                const span = document.createElement('span');
+                let binaryString = '';
+                for (let j = 0; j < 50; j++) {
+                    binaryString += Math.round(Math.random()) + '\n';
+                }
+                span.textContent = binaryString;
+                span.style.left = (i * 15) + 'px';
+                span.style.animationDelay = (Math.random() * 5) + 's';
+                span.style.animationDuration = (10 + Math.random() * 10) + 's';
+                bg.appendChild(span);
+            }
+        });
+    </script>
+
+    <!-- Contenuto principale (Testo dall'utente) -->
+    <div class="content">
+
+        <h1 class="title">RSA Exposed: A Statistical Look at Public-Key Encryption</h1>
+
+        <p>In our last assignment, we explored <strong>symmetric</strong> cryptography with the Caesar cipher, where a single secret key (the "shift") is used to both encrypt and decrypt. We saw how frequency analysis can break this cipher. Now, we enter the world of <strong>asymmetric</strong> cryptography with RSA, the algorithm that underpins much of modern internet security. But what happens if we apply RSA incorrectly, "letter by letter"?</p>
+
+        <h3>What is Asymmetric (Public-Key) Cryptography?</h3>
+        <p>Unlike the Caesar cipher, asymmetric cryptography uses a pair of keys:</p>
+        <ul>
+            <li><strong>Public Key:</strong> Can be shared with anyone. It is used to <strong>encrypt</strong> messages.</li>
+            <li><strong>Private Key:</strong> Must be kept secret. It is the only key that can <strong>decrypt</strong> messages encrypted with its corresponding public key.</li>
+        </ul>
+        <p>This solves a huge problem: how to securely exchange a secret key? With RSA, you don't have to. You can publish your public key, and anyone can send you a secure message.</p>
+
+        <h3>The RSA Algorithm: An Overview</h3>
+        <p>RSA (named after its inventors, Rivest, Shamir, and Adleman) bases its security on the difficulty of factoring very large numbers. The key steps are:</p>
+        
+        <h4>Key Generation:</h4>
+        <ul>
+            <li>Choose two very large prime numbers, <code>p</code> and <code>q</code> (secret).</li>
+            <li>Calculate the modulus <code>n = p * q</code> (public).</li>
+            <li>Calculate Euler's totient <code>phi(n) = (p-1) * (q-1)</code> (secret).</li>
+            <li>Choose a public exponent <code>e</code> (often 65537 or 3), which must be coprime with <code>phi(n)</code>.</li>
+            <li>Calculate the private exponent <code>d</code> such that <code>(d * e) % phi(n) = 1</code>.</li>
+        </ul>
+        
+        <p><strong>Encryption:</strong> To encrypt a message <code>M</code> (treated as a number), calculate: <code>C = (M<sup>e</sup>) % n</code>.</p>
+        <p><strong>Decryption:</strong> To decrypt <code>C</code>, calculate: <code>M = (C<sup>d</sup>) % n</code>.</p>
+
+        <h3>The Homework's Premise: RSA "Letter by Letter"</h3>
+        <p>Normally, RSA encrypts large blocks of data. For this assignment, we apply the RSA formula to every single letter (or, more precisely, its ASCII value). For example, we encrypt 'a' (ASCII 97), then 'b' (ASCII 98), and so on.</p>
+        <p>This creates a <strong>deterministic substitution cipher</strong>. Every 'a' in the original text will always be encrypted into the same number (97<sup>e</sup> % n), and every 'b' will be encrypted into another fixed number (98<sup>e</sup> % n). What does this mean from a statistical standpoint?</p>
+        <p><strong>It means the frequency distribution is preserved!</strong> Just like in the Caesar cipher, the most frequent letter in the plaintext (like 'e' or 'a') will correspond to the most frequent <em>number*</em> in the ciphertext. This is a fatal vulnerability that allows us to use the same frequency analysis from the previous assignment to break this flawed implementation of RSA.</p>
+
+        <h3>From Statistics to Cryptanalysis: Breaking "Letter by Letter" RSA</h3>
+        <p>Since the frequency is preserved, we can launch an attack. If we have a ciphertext (a long list of numbers), we can:</p>
+        <ol>
+            <li>Count the frequency of each number in the ciphertext.</li>
+            <li>Count the frequency of each letter in a reference text (e.g., a long text in English or Italian).</li>
+            <li>Create a decryption map: The most frequent number in the ciphertext <em>probably*</em> corresponds to the most frequent letter in the reference text. The second most frequent corresponds to the second, and so on.</li>
+        </ol>
+        <p>This interactive simulation implements exactly this attack. It encrypts the text using "letter by letter" RSA parameters and then uses frequency analysis to decrypt it without knowing the private key <code>d</code>.</p>
+
+        <!-- ###################### -->
+        <!--  SIMULAZIONE INIZIA QUI -->
+        <!-- ###################### -->
+        
+        <h2>RSA Simulation and Frequency Attack</h2>
+        <div class="simulation-container">
+            <p>This simulation encrypts the text using the RSA formula on each letter, then uses frequency analysis to deduce the original text.</p>
+            
+            <div id="error-container" class="error-message" style="display: none;"></div>
+
+            <div class="input-group">
+                <label for="sim-text">1. Enter Original Text (a long text works best):</label>
+                <textarea id="sim-text" placeholder="Paste a long paragraph of text here. The longer the text, the more accurate the frequency analysis attack will be..."></textarea>
+            </div>
+
+            <div class="input-row">
+                <div class="input-group">
+                    <label for="sim-p">2. Prime `p` (e.g., 53):</label>
+                    <input type="number" id="sim-p" value="53">
+                </div>
+                <div class="input-group">
+                    <label for="sim-q">3. Prime `q` (e.g., 59):</label>
+                    <input type="number" id="sim-q" value="59">
+                </div>
+                <div class="input-group">
+                    <label for="sim-e">4. Exponent `e` (e.g., 3):</label>
+                    <input type="number" id="sim-e" value="3">
+                </div>
+            </div>
+
+            <button onclick="runAttack()">5. Encrypt & Run Analysis</button>
+
+            <!-- Area Risultati -->
+            <div class="results-box">
+                <h4>6. Encrypted Text (numeric values):</h4>
+                <pre id="out-encrypted">--- Awaiting Encryption ---</pre>
+            </div>
+            
+            <div class="results-box">
+                <h4>7. Analysis & Calculated Keys:</h4>
+                <pre id="out-keys">--- Awaiting Analysis ---</pre>
+                
+                <h4 style="margin-top: 15px;">Building Decryption Map (Attack):</h4>
+                <pre id="out-map">--- Awaiting Analysis ---</pre>
+            </div>
+
+            <div class="results-box">
+                <h4>8. Decrypted Text (via Statistical Analysis):</h4>
+                <pre id="out-decrypted">--- Awaiting Attack ---</pre>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ###################### -->
+    <!--   JAVASCRIPT LOGIC     -->
+    <!-- ###################### -->
+    <script>
+        // --- Funzioni Helper per la crittografia (usando BigInt) ---
+
+        // Calcola (base^exponent) % modulus
+        function modPow(base, exponent, modulus) {
+            if (modulus === 1n) return 0n;
+            let result = 1n;
+            base = base % modulus;
+            while (exponent > 0n) {
+                if (exponent % 2n === 1n) {
+                    result = (result * base) % modulus;
+                }
+                exponent = exponent >> 1n;
+                base = (base * base) % modulus;
+            }
+            return result;
+        }
+
+        // Calcola l'inverso modulare di e % phi (per trovare d)
+        function modInverse(e, phi) {
+            let [old_r, r] = [e, phi];
+            let [old_s, s] = [1n, 0n];
+            
+            while (r > 0n) {
+                const quotient = old_r / r;
+                [old_r, r] = [r, old_r - quotient * r];
+                [old_s, s] = [s, old_s - quotient * s];
+            }
+            
+            if (old_r !== 1n) {
+                return null; // Non sono coprimi
+            }
+            
+            return (old_s % phi + phi) % phi;
+        }
+
+        // Calcola il massimo comune divisore
+        function gcd(a, b) {
+            while (b) {
+                [a, b] = [b, a % b];
+            }
+            return a;
+        }
+
+        // Verifica primalità (semplice, non per numeri crypto-grandi)
+        function isPrime(num) {
+            if (num <= 1n) return false;
+            if (num <= 3n) return true;
+            if (num % 2n === 0n || num % 3n === 0n) return false;
+            for (let i = 5n; i * i <= num; i = i + 6n) {
+                if (num % i === 0n || num % (i + 2n) === 0n) return false;
+            }
+            return true;
+        }
+
+        // --- Funzione Principale della Simulazione ---
+        
+        function runAttack() {
+            const text = document.getElementById('sim-text').value;
+            const p = BigInt(document.getElementById('sim-p').value);
+            const q = BigInt(document.getElementById('sim-q').value);
+            const e = BigInt(document.getElementById('sim-e').value);
+            
+            const errorContainer = document.getElementById('error-container');
+            errorContainer.style.display = 'none';
+            errorContainer.textContent = '';
+
+            // --- 1. Validazione Input ---
+            try {
+                if (text.length < 20) throw new Error('Text is too short! Please use a longer paragraph for accurate analysis.');
+                if (!isPrime(p) || !isPrime(q)) throw new Error(`p (${p}) or q (${q}) is not a prime number.`);
+                if (p === q) throw new Error('p and q cannot be the same number.');
+                
+                const n = p * q;
+                if (n <= 127n) throw new Error(`n (${n}) is too small. It must be larger than 127 to encrypt ASCII characters. Choose larger primes.`);
+                
+                const phi = (p - 1n) * (q - 1n);
+                if (gcd(e, phi) !== 1n) throw new Error(`e (${e}) is not coprime with phi (${phi}). gcd is ${gcd(e, phi)}. Try a different 'e' (like 3, 5, or 17).`);
+
+                // --- 2. Calcolo Chiavi (per riferimento) ---
+                const d = modInverse(e, phi);
+                if (d === null) throw new Error('Could not calculate private key d.');
+                
+                const keysOutput = `Calculated Parameters:
+  n (Modulus): ${n}
+  phi(n): ${phi}
+  Public Key (e): ${e}
+  Private Key (d): ${d} (for reference)`;
+                document.getElementById('out-keys').textContent = keysOutput;
+
+                // --- 3. Cifratura (Letter by Letter) ---
+                const ciphertext = [];
+                for (let i = 0; i < text.length; i++) {
+                    const M = BigInt(text.charCodeAt(i));
+                    const C = modPow(M, e, n);
+                    ciphertext.push(C);
+                }
+                document.getElementById('out-encrypted').textContent = ciphertext.map(String).join(', ');
+
+                // --- 4. Analisi delle Frequenze (L'ATTACCO) ---
+                
+                // 4a. Analizza il testo in chiaro (per creare la distribuzione di riferimento)
+                const plainFreq = new Map();
+                for (const char of text) {
+                    plainFreq.set(char, (plainFreq.get(char) || 0) + 1);
+                }
+                // Ordina per frequenza (dal più comune al meno comune)
+                const sortedPlain = Array.from(plainFreq.entries()).sort((a, b) => b[1] - a[1]);
+
+                // 4b. Analizza il testo cifrato
+                const cipherFreq = new Map();
+                for (const num of ciphertext) {
+                    cipherFreq.set(num, (cipherFreq.get(num) || 0) + 1);
+                }
+                // Ordina per frequenza
+                const sortedCipher = Array.from(cipherFreq.entries()).sort((a, b) => b[1] - a[1]);
+
+                // --- 5. Costruzione Mappa di Decifratura (L'Attacco) ---
+                const decryptionMap = new Map();
+                let mapString = "";
+                const maxRank = Math.min(sortedPlain.length, sortedCipher.length);
+
+                for (let i = 0; i < maxRank; i++) {
+                    const [cipherNum, cipherCount] = sortedCipher[i];
+                    const [plainChar, plainCount] = sortedPlain[i];
+                    
+                    decryptionMap.set(cipherNum, plainChar);
+                    
+                    // Aggiungi alla stringa di output
+                    const rank = (i + 1).toString().padStart(2, ' ');
+                    const cNumStr = cipherNum.toString().padStart(5, ' ');
+                    const pCharStr = plainChar === ' ' ? "' '" : `'${plainChar}'`;
+                    mapString += `${rank}. Cipher Num ${cNumStr} (Count: ${cipherCount}) -> Char ${pCharStr} (Count: ${plainCount})\n`;
+                }
+                document.getElementById('out-map').textContent = mapString || "--- Analysis Failed ---";
+
+                // --- 6. Decifratura (usando la mappa dell'attacco) ---
+                let decryptedText = "";
+                for (const num of ciphertext) {
+                    decryptedText += decryptionMap.get(num) || '?'; // '?' se non trovato
+                }
+                document.getElementById('out-decrypted').textContent = decryptedText;
+
+            } catch (err) {
+                console.error(err);
+                errorContainer.textContent = `Error: ${err.message}`;
+                errorContainer.style.display = 'block';
+                // Resetta output in caso di errore
+                document.getElementById('out-encrypted').textContent = "--- Error ---";
+                document.getElementById('out-keys').textContent = "--- Error ---";
+                document.getElementById('out-map').textContent = "--- Error ---";
+                document.getElementById('out-decrypted').textContent = "--- Error ---";
+            }
+        }
+
+    </script>
+</body>
+</html>
+
