@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homework 4: The Law of Large Numbers</title>
+    <!-- Import Chart.js per i grafici -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        /* Stile base (da homework2.html) */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+            color: #00ff00;
+            background-color: #0d1a0d;
+            overflow-x: hidden;
+        }
+
+        /* Sfondo binario (da homework2.html) */
+        .binary-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.05;
+            filter: blur(0.5px);
+            transform: scale(1.05);
+        }
+        
+        .binary-background span {
+            position: absolute;
+            white-space: pre;
+            line-height: 15px;
+            font-size: 15px;
+            color: #00cc00;
+            animation: flow 15s linear infinite;
+        }
+        
+        @keyframes flow {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+
+        /* Contenuto principale al centro (da homework2.html) */
+        .content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        /* Stile del titolo (da homework2.html) */
+        .title {
+            font-size: 3em; 
+            margin-bottom: 20px;
+            color: #39ff14;
+            text-shadow: 0 0 10px #39ff14, 0 0 20px #39ff14;
+        }
+
+        /* Stili per il contenuto (Adattati) */
+        h2 {
+            font-size: 2.5em;
+            color: #00ff00;
+            text-shadow: 0 0 5px #00ff00;
+            margin-top: 40px;
+            width: 90%;
+            max-width: 900px;
+            text-align: left;
+        }
+
+        h3 {
+            font-size: 1.8em;
+            color: #39ff14;
+            border-bottom: 1px dashed #39ff14;
+            padding-bottom: 5px;
+            margin-top: 30px;
+            text-align: left;
+            width: 90%;
+            max-width: 900px;
+        }
+
+        p, ul {
+            width: 90%;
+            max-width: 900px;
+            margin: 15px auto;
+            text-align: left;
+            line-height: 1.6;
+            font-size: 1.1em;
+        }
+        
+        ul {
+            list-style-type: '⚡ ';
+            margin-left: 20px;
+        }
+
+        strong {
+            color: #39ff14;
+        }
+
+        code {
+            background-color: rgba(0, 50, 0, 0.7);
+            padding: 2px 5px;
+            border: 1px solid #00cc00;
+            color: #e0ffe0;
+        }
+
+        /* Stili per la simulazione (Nuovi) */
+        .simulation-container, .chart-container {
+            width: 90%;
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: rgba(0, 30, 0, 0.8);
+            border: 3px double #39ff14;
+            box-shadow: 0 0 15px rgba(57, 255, 20, 0.8);
+            text-align: left;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #00ff00;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .input-group input[type="number"] {
+            width: 98%;
+            padding: 10px;
+            background-color: #0d1a0d;
+            border: 1px solid #00ff00;
+            color: #39ff14;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.1em;
+        }
+
+        button {
+            background-color: #39ff14;
+            color: #0d1a0d;
+            border: none;
+            padding: 12px 25px;
+            font-weight: bold;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s, box-shadow 0.3s;
+            border-radius: 4px;
+            box-shadow: 0 0 8px #39ff14;
+            margin-top: 10px;
+            margin-right: 10px;
+        }
+
+        button:hover {
+            background-color: #00cc00;
+            box-shadow: 0 0 15px #00cc00;
+        }
+
+        #stats-output {
+            margin-top: 20px;
+            padding: 15px;
+            border: 2px dashed #00cc00;
+            background-color: rgba(0, 50, 0, 0.7);
+            color: #e0ffe0;
+            font-size: 1.2em;
+            line-height: 1.8;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Sfondo binario (da homework2.html) -->
+    <div class="binary-background" id="binary-bg"></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const bg = document.getElementById('binary-bg');
+            if (!bg) return;
+            const columns = Math.floor(window.innerWidth / 15);
+            for (let i = 0; i < columns; i++) {
+                const span = document.createElement('span');
+                let binaryString = '';
+                for (let j = 0; j < 50; j++) {
+                    binaryString += Math.round(Math.random()) + '\n';
+                }
+                span.textContent = binaryString;
+                span.style.left = (i * 15) + 'px';
+                span.style.animationDelay = (Math.random() * 5) + 's';
+                span.style.animationDuration = (10 + Math.random() * 10) + 's';
+                bg.appendChild(span);
+            }
+        });
+    </script>
+
+    <!-- Contenuto principale -->
+    <div class="content">
+
+        <h1 class="title">Homework 4: The Law of Large Numbers</h1>
+
+        <h3>What is the Law of Large Numbers (LLN)?</h3>
+        <p>The Law of Large Numbers is a fundamental theorem in probability theory. In simple terms, it states that if you repeat an experiment (like tossing a coin) a very large number of times, the <strong>average of the results</strong> obtained (the "empirical frequency") will tend to get closer and closer to the <strong>expected value</strong> (the theoretical probability).</p>
+        <p>For a fair coin, the theoretical probability of getting "Heads" is 0.5 (or 50%). The LLN tells us that if we toss the coin thousands (or millions) of times, the percentage of "Heads" we get will be very, very close to 50%.</p>
+
+        <h3>The Simulation: Coin Toss</h3>
+        <p>This simulation does exactly that. For each "toss":</p>
+        <ul>
+            <li>It generates a random number between 0.0 and 1.0 (using <code>Math.random()</code>).</li>
+            <li>If the number is < 0.5, we consider it "Tails" (0).</li>
+            <li>If the number is >= 0.5, we consider it "Heads" (1).</li>
+        </ul>
+        <p>The chart below shows what happens toss after toss.</p>
+
+        <!-- ###################### -->
+        <!--  SIMULATION STARTS HERE -->
+        <!-- ###################### -->
+        
+        <h2>LLN Simulation</h2>
+        <div class="simulation-container">
+            <p>Enter the number of tosses to simulate. The higher the number, the more clearly you will see the law of large numbers in action.</p>
+            
+            <div class="input-group">
+                <label for="sim-tosses">Number of Tosses:</label>
+                <input type="number" id="sim-tosses" value="1000">
+            </div>
+
+            <button onclick="runSimulation()">Run Simulation</button>
+            <button onclick="addTosses(1000)">Add 1000 Tosses</button>
+
+            <div id="stats-output">
+                --- Awaiting Stats ---
+            </div>
+        </div>
+
+        <!-- Chart Area 1 -->
+        <div class="chart-container">
+            <h3>Chart 1: Random Walk (Cumulative Values)</h3>
+            <canvas id="llnChart"></canvas>
+        </div>
+        
+        <h3>Chart 1 Analysis</h3>
+        <p>In the chart above, you will see two lines:</p>
+        <ul>
+            <li><strong>Blue Line (Cumulative Heads):</strong> This is the "random walk" of our results. It goes up by 1 every time "Heads" (1) comes out and stays flat when "Tails" (0) comes out.</li>
+            <li><strong>Red Line (Expected Value 50%):</strong> This is theoretical perfection. It's a straight line showing where the blue line *should* be if exactly 50% of the tosses were "Heads".</li>
+        </ul>
+        <p>As you can see, the blue line (reality) oscillates around the red line (theory). It might stray far at the beginning, but the more tosses you add, the more the blue line will be "forced" to follow the trend of the red line. The <strong>proportion</strong> (shown in the stats) will stabilize closer and closer to 50%.</p>
+
+        <!-- NEW SECTION: CHART 2 -->
+        <div class="chart-container">
+            <h3>Chart 2: Proportion Convergence (LLN)</h3>
+            <canvas id="llnChartProportion"></canvas>
+        </div>
+        
+        <h3>Chart 2 Analysis (The Distribution)</h3>
+        <p>This second chart is the true demonstration of the Law of Large Numbers. It shows the <strong>proportion</strong> (or frequency) of heads (calculated as <code>Total Heads / Total Tosses</code>) at each step.</p>
+        <ul>
+            <li><strong>Blue Line (Actual Proportion):</strong> At the beginning (few tosses), the proportion is very volatile (e.g., 0%, 100%, 50%, 33%...).</li>
+            <li><strong>Red Line (Expected Value 50%):</strong> This is a flat line at 0.5.</li>
+        </ul>
+        <p>As you can see, as the number of tosses (X-axis) increases, the blue line stops oscillating wildly and "stabilizes," converging more and more precisely towards the red line at 0.5 (50%).</p>
+
+    </div>
+
+    <!-- ###################### -->
+    <!--   JAVASCRIPT LOGIC     -->
+    <!-- ###################### -->
+    <script>
+        let llnChart = null; // Global variable for chart 1
+        let llnChartProportion = null; // Global variable for chart 2
+        let simulationData = {
+            labels: [],
+            actualHeads: [],
+            expectedHeads: [],
+            proportion: [] // New array for proportion data
+        };
+        let cumulativeHeads = 0;
+        let totalTosses = 0;
+
+        // Function to initialize or update chart 1 (Cumulative)
+        function initOrUpdateChart() {
+            const ctx = document.getElementById('llnChart').getContext('2d');
+            
+            // Style for dark mode
+            Chart.defaults.color = '#00ff00';
+            Chart.defaults.borderColor = 'rgba(0, 255, 0, 0.2)';
+
+            if (llnChart) {
+                // If chart exists, just update data
+                llnChart.data.labels = simulationData.labels;
+                llnChart.data.datasets[0].data = simulationData.actualHeads;
+                llnChart.data.datasets[1].data = simulationData.expectedHeads;
+                llnChart.update();
+            } else {
+                // Otherwise, create a new chart
+                llnChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: simulationData.labels,
+                        datasets: [
+                            {
+                                label: 'Cumulative Heads (Actual)',
+                                data: simulationData.actualHeads,
+                                backgroundColor: 'rgba(57, 255, 20, 0.2)',
+                                borderColor: '#39ff14',
+                                borderWidth: 2,
+                                pointRadius: 0, // Hide points for large charts
+                                tension: 0.1
+                            },
+                            {
+                                label: 'Expected Value (50%)',
+                                data: simulationData.expectedHeads,
+                                backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                                borderColor: '#ff3333',
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                borderDash: [5, 5], // Dashed line
+                                tension: 0.1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        animation: {
+                            duration: 500 // Faster animation
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Number of Tosses'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Number of Heads'
+                                }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // NEW FUNCTION FOR CHART 2
+        // Function to initialize or update the PROPORTION chart
+        function initOrUpdateProportionChart() {
+            const ctx = document.getElementById('llnChartProportion').getContext('2d');
+            
+            // Style for dark mode
+            Chart.defaults.color = '#00ff00';
+            Chart.defaults.borderColor = 'rgba(0, 255, 0, 0.2)';
+
+            if (llnChartProportion) {
+                // If chart exists, just update data
+                llnChartProportion.data.labels = simulationData.labels;
+                llnChartProportion.data.datasets[0].data = simulationData.proportion;
+                // Recalculate the 50% line for the new length
+                llnChartProportion.data.datasets[1].data = Array(simulationData.labels.length).fill(0.5);
+                llnChartProportion.update();
+            } else {
+                // Otherwise, create a new chart
+                llnChartProportion = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: simulationData.labels,
+                        datasets: [
+                            {
+                                label: 'Actual Proportion (Heads/Tosses)',
+                                data: simulationData.proportion,
+                                backgroundColor: 'rgba(57, 255, 20, 0.2)',
+                                borderColor: '#39ff14',
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                tension: 0.1
+                            },
+                            {
+                                label: 'Expected Value (0.5)',
+                                data: Array(simulationData.labels.length).fill(0.5), // Fixed line at 0.5
+                                backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                                borderColor: '#ff3333',
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                borderDash: [5, 5],
+                                tension: 0.1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        animation: {
+                            duration: 500
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Number of Tosses'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Proportion of Heads'
+                                },
+                                min: 0, // Set Y-axis from 0 to 1
+                                max: 1
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Function to run the simulation from scratch
+        function runSimulation() {
+            const numTossesInput = parseInt(document.getElementById('sim-tosses').value, 10);
+            
+            // Reset data
+            simulationData.labels = [];
+            simulationData.actualHeads = [];
+            simulationData.expectedHeads = [];
+            simulationData.proportion = []; // Reset proportion data
+            cumulativeHeads = 0;
+            totalTosses = 0;
+
+            if (isNaN(numTossesInput) || numTossesInput <= 0) {
+                document.getElementById('stats-output').textContent = "Error: Please enter a valid number of tosses.";
+                return;
+            }
+
+            performTosses(numTossesInput);
+            initOrUpdateChart();
+            initOrUpdateProportionChart(); // Add call for the new chart
+            updateStats();
+        }
+
+        // Function to add N tosses
+        function addTosses(numToAdd) {
+             if (totalTosses === 0) {
+                runSimulation(); // If it's the first run, execute the simulation
+                return;
+            }
+            const newTotal = totalTosses + numToAdd;
+            performTosses(newTotal); // Perform tosses from the current point to the new total
+            initOrUpdateChart();
+            initOrUpdateProportionChart(); // Add call for the new chart
+            updateStats();
+        }
+
+        // Helper function to perform the toss calculations
+        function performTosses(targetTosses) {
+            // If adding tosses, continue from where we were
+            // If it's a new simulation (totalTosses = 0), i = 1
+            for (let i = totalTosses + 1; i <= targetTosses; i++) {
+                const toss = Math.random();
+                if (toss >= 0.5) {
+                    cumulativeHeads++; // Heads (1)
+                }
+                // (If 0, we do nothing, the line stays horizontal)
+                
+                // Calculate the current proportion
+                const currentProportion = cumulativeHeads / i;
+
+                // We only update data at intervals for large charts
+                // to avoid overloading the browser
+                if (targetTosses <= 2000 || i % Math.floor(targetTosses / 2000) === 0 || i === targetTosses) {
+                     simulationData.labels.push(i);
+                     simulationData.actualHeads.push(cumulativeHeads);
+                     simulationData.expectedHeads.push(i * 0.5);
+                     simulationData.proportion.push(currentProportion); // Add proportion data
+                }
+            }
+            totalTosses = targetTosses; // Update the total count
+        }
+
+        // Function to update the stats box
+        function updateStats() {
+            if (totalTosses === 0) {
+                document.getElementById('stats-output').textContent = "--- Awaiting Stats ---";
+                return;
+            }
+            
+            const proportion = (cumulativeHeads / totalTosses) * 100;
+            document.getElementById('stats-output').innerHTML = `
+                <strong>Total Tosses:</strong> ${totalTosses}<br>
+                <strong>Total Heads (1):</strong> ${cumulativeHeads}<br>
+                <strong>Heads Proportion:</strong> ${proportion.toFixed(4)}%
+            `;
+        }
+        
+        // Run an initial simulation on page load
+        document.addEventListener('DOMContentLoaded', runSimulation);
+
+    </script>
+</body>
+</html>
