@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Task: Measures of Location and Dispersion</title>
+    <style>
+        /* Stile base (da homework4.html) */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+            color: #00ff00;
+            background-color: #0d1a0d;
+            overflow-x: hidden;
+        }
+
+        /* Sfondo binario (da homework4.html) */
+        .binary-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.05;
+            filter: blur(0.5px);
+            transform: scale(1.05);
+        }
+        
+        .binary-background span {
+            position: absolute;
+            white-space: pre;
+            line-height: 15px;
+            font-size: 15px;
+            color: #00cc00;
+            animation: flow 10s linear infinite;
+        }
+        
+        @keyframes flow {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100vh); }
+        }
+
+        /* Container principale (da homework4.html) */
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        /* Finestra terminale (da homework4.html) */
+        .terminal-window {
+            background-color: rgba(0, 20, 0, 0.7);
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3), inset 0 0 10px rgba(0, 255, 0, 0.2);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            overflow: hidden;
+        }
+        
+        .terminal-header {
+            background-color: #003300;
+            padding: 8px 12px;
+            border-bottom: 1px solid #00ff00;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title-bar {
+            display: flex;
+            align-items: center;
+        }
+
+        .title-bar-buttons {
+            display: flex;
+        }
+
+        .title-bar-buttons span {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #00ff00;
+            margin-left: 6px;
+            border: 1px solid rgba(0, 0, 0, 0.3);
+            opacity: 0.6;
+        }
+
+        .title-bar-buttons .close { background-color: #ff0000; }
+        .title-bar-buttons .minimize { background-color: #ffff00; }
+        .title-bar-buttons .maximize { background-color: #00ff00; }
+
+        .terminal-body {
+            padding: 20px;
+            max-height: 75vh;
+            overflow-y: auto;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        /* Stili per il testo della ricerca */
+        .terminal-body h1, .terminal-body h2, .terminal-body h3 {
+            color: #00ff00;
+            border-bottom: 1px solid #005500;
+            padding-bottom: 5px;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        .terminal-body h1 {
+            font-size: 1.8em;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .terminal-body h2 {
+            font-size: 1.5em;
+            margin-top: 30px;
+        }
+
+        .terminal-body h3 {
+            font-size: 1.2em;
+            margin-top: 20px;
+            color: #00cc00; /* Un verde leggermente diverso per la gerarchia */
+        }
+
+        .terminal-body p {
+            margin-bottom: 15px;
+        }
+
+        .terminal-body ul {
+            list-style-type: '>$ '; /* Stile lista come un prompt */
+            padding-left: 20px;
+        }
+
+        .terminal-body li {
+            padding-left: 10px;
+            margin-bottom: 10px;
+        }
+
+        .terminal-body strong {
+            color: #ffffff;
+            font-weight: normal;
+        }
+
+        /* Glitch effect (da homework4.html) */
+        .glitch {
+            font-size: 2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            position: relative;
+            text-shadow: 0.05em 0 0 rgba(0, 255, 0, 0.75),
+                        -0.025em -0.05em 0 rgba(255, 0, 0, 0.75),
+                         0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+            animation: glitch 500ms infinite;
+        }
+
+        @keyframes glitch {
+            0% { text-shadow: 0.05em 0 0 rgba(0, 255, 0, 0.75), -0.05em -0.025em 0 rgba(255, 0, 0, 0.75), -0.025em 0.05em 0 rgba(0, 0, 255, 0.75); }
+            14% { text-shadow: 0.05em 0 0 rgba(0, 255, 0, 0.75), -0.05em -0.025em 0 rgba(255, 0, 0, 0.75), -0.025em 0.05em 0 rgba(0, 0, 255, 0.75); }
+            15% { text-shadow: -0.05em -0.025em 0 rgba(0, 255, 0, 0.75), 0.025em 0.025em 0 rgba(255, 0, 0, 0.75), -0.05em -0.05em 0 rgba(0, 0, 255, 0.75); }
+            49% { text-shadow: -0.05em -0.025em 0 rgba(0, 255, 0, 0.75), 0.025em 0.025em 0 rgba(255, 0, 0, 0.75), -0.05em -0.05em 0 rgba(0, 0, 255, 0.75); }
+            50% { text-shadow: 0.025em 0.05em 0 rgba(0, 255, 0, 0.75), 0.05em 0 0 rgba(255, 0, 0, 0.75), 0 -0.05em 0 rgba(0, 0, 255, 0.75); }
+            99% { text-shadow: 0.025em 0.05em 0 rgba(0, 255, 0, 0.75), 0.05em 0 0 rgba(255, 0, 0, 0.75), 0 -0.05em 0 rgba(0, 0, 255, 0.75); }
+            100% { text-shadow: -0.025em 0 0 rgba(0, 255, 0, 0.75), -0.025em -0.025em 0 rgba(255, 0, 0, 0.75), -0.025em -0.05em 0 rgba(0, 0, 255, 0.75); }
+        }
+
+        /* Scanlines (da homework4.html) */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 1000;
+            background: linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 0) 0%,
+                rgba(0, 0, 0, 0) 50%,
+                rgba(0, 0, 0, 0.2) 51%,
+                rgba(0, 0, 0, 0) 100%
+            );
+            background-size: 100% 4px;
+            animation: scan 10s linear infinite;
+        }
+        
+        @keyframes scan {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 100vh; }
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Sfondo binario -->
+    <div class="binary-background" id="binary-bg"></div>
+
+    <!-- Effetto Scanlines -->
+    <div class="scanlines"></div>
+
+    <div class="container">
+        <div class="terminal-window">
+            <div class="terminal-header">
+                <div class="title-bar-buttons">
+                    <span class="close"></span>
+                    <span class="minimize"></span>
+                    <span class="maximize"></span>
+                </div>
+                <div class="title-bar-text">STATISTICS_TERMINAL_SESSION</div>
+                <div>[root@gemini ~]</div>
+            </div>
+            <div class="terminal-body">
+                <h1 class="glitch">Research Task</h1>
+                <h2>Measures of Location and Dispersion</h2>
+
+                <p>In statistics, datasets are analyzed to understand their core characteristics. This analysis is often broken down into two key areas: measures of location (or central tendency), which describe the "center" of the data, and measures of dispersion, which describe the "spread" or variability of the data.</p>
+
+                <!-- Sezione 1: Misure di Posizione -->
+                <h2>1. Measures of Location (Central Tendency)</h2>
+                <p>These measures provide a single value that attempts to describe a set of data by identifying the central position within that set.</p>
+
+                <h3>Arithmetic Mean</h3>
+                <p>The <strong>mean</strong> (or average) is the most common measure of central tendency. It is calculated by summing all the values in a dataset and dividing by the number of values.</p>
+                <ul>
+                    <li><strong>Uses:</strong> Widely used in all fields (e.g., average grade, average income, average temperature). It is the foundation for many other statistical calculations.</li>
+                    <li><strong>Advantages:</strong> It uses every value in the dataset, making it a comprehensive measure. It is unique and mathematically treatable.</li>
+                    <li><strong>Limitations:</strong> Its main disadvantage is its high sensitivity to <strong>outliers</strong> (extremely high or low values). A single outlier can significantly skew the mean, making it non-representative of the data's center.</li>
+                </ul>
+
+                <h3>Median</h3>
+                <p>The <strong>median</strong> is the middle value in a dataset that has been ordered from least to greatest. If the dataset has an even number of values, the median is the average of the two middle values.</p>
+                <ul>
+                    <li><strong>Uses:</strong> Preferred when data is skewed or contains outliers (e.g., house prices, income levels). It represents the "typical" value or the 50th percentile.</li>
+                    <li><strong>Advantages:</strong> It is <strong>robust</strong>, meaning it is not affected by outliers or the distribution's shape.</li>
+                    <li><strong>Limitations:</strong> It does not use all the data points in its calculation (it only cares about the middle one(s)). It is less amenable to advanced mathematical modeling than the mean.</li>
+                </ul>
+
+                <h3>Mode</h3>
+                <p>The <strong>mode</strong> is the value that appears most frequently in a dataset. A dataset can have one mode (unimodal), more than one mode (multimodal), or no mode at all.</p>
+                <ul>
+                    <li><strong>Uses:</strong> It is the only measure of central tendency that can be used for <strong>categorical data</strong> (e.g., most popular car color, most common blood type).</li>
+                    <li><strong>Advantages:</strong> Easy to understand and find in a frequency distribution. Not affected by outliers.</li>
+                    <li><strong>Limitations:</strong> It may not be unique (multimodal). It may not exist if all values are unique. It can be a poor representation of the center if the most frequent value is far from the rest of the data.</li>
+                </ul>
+
+                <!-- Sezione 2: Misure di Dispersione -->
+                <h2>2. Measures of Dispersion</h2>
+                <p>These measures describe how spread out the data is. A low dispersion indicates that the data points tend to be close to the center, while high dispersion indicates they are spread over a wider range.</p>
+
+                <h3>Variance</h3>
+                <p>The <strong>variance</strong> measures the average squared difference of each value from the mean. A larger variance means the data is more spread out.</p>
+                <ul>
+                    <li><strong>Uses:</strong> A fundamental concept in statistical inference and modeling (e.g., ANOVA, regression analysis).</li>
+                    <li><strong>Advantages:</strong> Uses all data points. It is central to many statistical theories.</li>
+                    <li><strong>Limitations:</strong> The units are <strong>squared</strong> (e.g., if data is in meters, variance is in meters-squared), making it very difficult to interpret directly in the context of the original data. Like the mean, it is highly sensitive to outliers.</li>
+                </ul>
+
+                <h3>Standard Deviation</h3>
+                <p>The <strong>standard deviation</strong> is the square root of the variance. It is the most common and widely understood measure of dispersion.</p>
+                <ul>
+                    <li><strong>Uses:</strong> Describes the "average" distance of any given data point from the mean. Used in financial risk (volatility), quality control, and scientific research.</li>
+                    <li><strong>Advantages:</strong> It is expressed in the <strong>same units</strong> as the original data, making it directly interpretable. A low SD means data is clustered around the mean; a high SD means it's spread out.</li>
+                    <li><strong>Limitations:</strong> Like the mean and variance, it is sensitive to outliers.</li>
+                </ul>
+
+                <h3>Interquartile Range (IQR)</h3>
+                <p>The <strong>IQR</strong> describes the spread of the middle 50% of the data. It is calculated as the difference between the third quartile (Q3, 75th percentile) and the first quartile (Q1, 25th percentile).</p>
+                <ul>
+                    <li><strong>Uses:</strong> Used alongside the median for skewed datasets. Excellent for identifying outliers (values falling outside Q1 - 1.5*IQR or Q3 + 1.5*IQR). Used in box-and-whisker plots.</li>
+                    <li><strong>Advantages:</strong> It is <strong>robust</strong> to outliers, as it completely ignores the top 25% and bottom 25% of the data.</li>
+                    <li><strong>Limitations:</strong> It only describes the spread of the central half of the data, ignoring the tails entirely.</li>
+                </ul>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Script per lo sfondo binario (da homework4.html) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const bg = document.getElementById('binary-bg');
+            if (!bg) return;
+            
+            const numStrings = 100;
+            const screenWidth = window.innerWidth;
+            
+            for (let i = 0; i < numStrings; i++) {
+                const span = document.createElement('span');
+                let binaryString = '';
+                const stringLength = Math.floor(Math.random() * 50) + 20;
+                
+                for (let j = 0; j < stringLength; j++) {
+                    binaryString += Math.random() > 0.5 ? '1 ' : '0 ';
+                }
+                
+                span.textContent = binaryString;
+                span.style.left = `${Math.random() * screenWidth}px`;
+                span.style.top = `${Math.random() * -100}vh`; // Start above screen
+                span.style.animationDuration = `${Math.random() * 5 + 5}s`; // 5 to 10 seconds
+                span.style.animationDelay = `${Math.random() * 3}s`;
+                bg.appendChild(span);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytical Task: Online Algorithms</title>
+    <style>
+        /* Stile base (da homework4.html) */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+            color: #00ff00;
+            background-color: #0d1a0d;
+            overflow-x: hidden;
+        }
+
+        /* Sfondo binario (da homework4.html) */
+        .binary-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.05;
+            filter: blur(0.5px);
+            transform: scale(1.05);
+        }
+        
+        .binary-background span {
+            position: absolute;
+            white-space: pre;
+            line-height: 15px;
+            font-size: 15px;
+            color: #00cc00;
+            animation: flow 10s linear infinite;
+        }
+        
+        @keyframes flow {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100vh); }
+        }
+
+        /* Container principale (da homework4.html) */
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        /* Finestra terminale (da homework4.html) */
+        .terminal-window {
+            background-color: rgba(0, 20, 0, 0.7);
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3), inset 0 0 10px rgba(0, 255, 0, 0.2);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            overflow: hidden;
+        }
+        
+        .terminal-header {
+            background-color: #003300;
+            padding: 8px 12px;
+            border-bottom: 1px solid #00ff00;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title-bar-buttons {
+            display: flex;
+        }
+
+        .title-bar-buttons span {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 6px;
+            border: 1px solid rgba(0, 0, 0, 0.3);
+            opacity: 0.6;
+        }
+
+        .title-bar-buttons .close { background-color: #ff0000; }
+        .title-bar-buttons .minimize { background-color: #ffff00; }
+        .title-bar-buttons .maximize { background-color: #00ff00; }
+
+        .terminal-body {
+            padding: 20px;
+            max-height: 75vh;
+            overflow-y: auto;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        /* Stili per il testo della ricerca */
+        .terminal-body h1, .terminal-body h2, .terminal-body h3 {
+            color: #00ff00;
+            border-bottom: 1px solid #005500;
+            padding-bottom: 5px;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        .terminal-body h1 {
+            font-size: 1.8em;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .terminal-body h2 {
+            font-size: 1.5em;
+            margin-top: 30px;
+        }
+
+        .terminal-body h3 {
+            font-size: 1.2em;
+            margin-top: 20px;
+            color: #00cc00; /* Un verde leggermente diverso per la gerarchia */
+        }
+
+        .terminal-body p, .terminal-body .derivation-step {
+            margin-bottom: 15px;
+        }
+        
+        .terminal-body .derivation-step {
+            padding-left: 20px;
+            color: #00cc00;
+        }
+
+        .terminal-body ul {
+            list-style-type: '>$ '; /* Stile lista come un prompt */
+            padding-left: 20px;
+        }
+
+        .terminal-body li {
+            padding-left: 10px;
+            margin-bottom: 10px;
+        }
+
+        .terminal-body strong {
+            color: #ffffff;
+            font-weight: normal;
+        }
+        
+        .terminal-body code {
+            background-color: #002200;
+            color: #ffffff;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        /* Glitch effect (da homework4.html) */
+        .glitch {
+            font-size: 2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            position: relative;
+            text-shadow: 0.05em 0 0 rgba(0, 255, 0, 0.75),
+                        -0.025em -0.05em 0 rgba(255, 0, 0, 0.75),
+                         0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+            animation: glitch 500ms infinite;
+        }
+
+        @keyframes glitch {
+            0% { text-shadow: 0.05em 0 0 rgba(0, 255, 0, 0.75), -0.05em -0.025em 0 rgba(255, 0, 0, 0.75), -0.025em 0.05em 0 rgba(0, 0, 255, 0.75); }
+            14% { text-shadow: 0.05em 0 0 rgba(0, 255, 0, 0.75), -0.05em -0.025em 0 rgba(255, 0, 0, 0.75), -0.025em 0.05em 0 rgba(0, 0, 255, 0.75); }
+            15% { text-shadow: -0.05em -0.025em 0 rgba(0, 255, 0, 0.75), 0.025em 0.025em 0 rgba(255, 0, 0, 0.75), -0.05em -0.05em 0 rgba(0, 0, 255, 0.75); }
+            49% { text-shadow: -0.05em -0.025em 0 rgba(0, 255, 0, 0.75), 0.025em 0.025em 0 rgba(255, 0, 0, 0.75), -0.05em -0.05em 0 rgba(0, 0, 255, 0.75); }
+            50% { text-shadow: 0.025em 0.05em 0 rgba(0, 255, 0, 0.75), 0.05em 0 0 rgba(255, 0, 0, 0.75), 0 -0.05em 0 rgba(0, 0, 255, 0.75); }
+            99% { text-shadow: 0.025em 0.05em 0 rgba(0, 255, 0, 0.75), 0.05em 0 0 rgba(255, 0, 0, 0.75), 0 -0.05em 0 rgba(0, 0, 255, 0.75); }
+            100% { text-shadow: -0.025em 0 0 rgba(0, 255, 0, 0.75), -0.025em -0.025em 0 rgba(255, 0, 0, 0.75), -0.025em -0.05em 0 rgba(0, 0, 255, 0.75); }
+        }
+
+        /* Scanlines (da homework4.html) */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 1000;
+            background: linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 0) 0%,
+                rgba(0, 0, 0, 0) 50%,
+                rgba(0, 0, 0, 0.2) 51%,
+                rgba(0, 0, 0, 0) 100%
+            );
+            background-size: 100% 4px;
+            animation: scan 10s linear infinite;
+        }
+        
+        @keyframes scan {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 100vh; }
+        }
+        
+        /* === NUOVI STILI PER L'INTERFACCIA === */
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            align-items: center;
+        }
+        
+        .controls input[type="number"] {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.1em;
+            background-color: #001100;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 8px;
+            border-radius: 3px;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+            width: 150px;
+        }
+        
+        /* Rimuove le frecce dall'input number */
+        .controls input[type=number]::-webkit-inner-spin-button, 
+        .controls input[type=number]::-webkit-outer-spin-button { 
+          -webkit-appearance: none; 
+          margin: 0; 
+        }
+        .controls input[type=number] {
+          -moz-appearance: textfield;
+        }
+        
+        .controls button {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.1em;
+            background-color: #003300;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 8px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+            transition: background-color 0.2s, color 0.2s;
+        }
+        
+        .controls button:hover {
+            background-color: #00ff00;
+            color: #000000;
+            text-shadow: none;
+        }
+        
+        #stats-display {
+            border: 1px dashed #005500;
+            background-color: #001100;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 3px;
+        }
+        
+        #stats-display h3 {
+            margin-top: 0;
+        }
+        
+        #stats-display p {
+            font-size: 1.2em;
+            margin: 5px 0;
+        }
+        
+        #data-log {
+            border-top: 1px solid #005500;
+            padding-top: 10px;
+        }
+        
+        #data-log ul {
+            list-style-type: none;
+            padding-left: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: #001100;
+            border: 1px solid #003300;
+            padding: 10px;
+        }
+        
+        #data-log li {
+            padding-left: 0;
+            color: #00cc00;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Sfondo binario -->
+    <div class="binary-background" id="binary-bg"></div>
+
+    <!-- Effetto Scanlines -->
+    <div class="scanlines"></div>
+
+    <div class="container">
+        <div class="terminal-window">
+            <div class="terminal-header">
+                <div class="title-bar-buttons">
+                    <span class="close"></span>
+                    <span class="minimize"></span>
+                    <span class="maximize"></span>
+                </div>
+                <div class="title-bar-text">STATISTICS_TERMINAL_SESSION</div>
+                <div>[root@gemini ~]</div>
+            </div>
+            <div class="terminal-body">
+                <h1 class="glitch">Analytical Task</h1>
+                <h2>Online Algorithms for Mean and Variance</h2>
+
+                <!-- Sezione 1: Razionale -->
+                <h2>1. The Problem with "Batch" Algorithms</h2>
+                <p>Traditional "batch" algorithms require the entire dataset to be available before calculation. To find the variance, one must first calculate the mean (first pass), and then iterate through the entire dataset *again* to sum the squared differences from that mean (second pass).</p>
+                <ul>
+                    <li><strong>Memory-Intensive:</strong> They require <strong>O(n)</strong> memory, as all <strong>n</strong> data points must be stored.</li>
+                    <li><strong>Computationally Inefficient:</strong> They require multiple passes over the data.</li>
+                    <li><strong>Numerical Instability:</strong> A common "single-pass" batch formula, <code>(sum_of_squares / n) - (mean^2)</code>, is notoriously unstable. It involves subtracting two very large, similar numbers, which leads to <strong>catastrophic cancellation</strong> (loss of precision) and can even produce negative variance for data that should have zero variance.</li>
+                </ul>
+                <p><strong>Online algorithms</strong> solve this by updating statistics incrementally. They use <strong>O(1)</strong> memory (storing only the current aggregate statistics) and process each data point only once.</p>
+
+                <!-- Sezione 2: Derivazione Media -->
+                <h2>2. Derivation: Recurrence Relation for Mean</h2>
+                <p>We want to find the new mean, <strong>mean_n</strong>, using only the previous mean, <strong>mean_n-1</strong>, the new value <strong>x_n</strong>, and the count <strong>n</strong>.</p>
+                
+                <div class="derivation-step"><strong>1. Definition of mean_n:</strong><br>
+                <code>mean_n = (1/n) * (x_1 + x_2 + ... + x_n)</code></div>
+                
+                <div class="derivation-step"><strong>2. Separate the n-th term:</strong><br>
+                <code>mean_n = (1/n) * [ (x_1 + ... + x_n-1) + x_n ]</code></div>
+                
+                <div class="derivation-step"><strong>3. We know that (x_1 + ... + x_n-1) = (n-1) * mean_n-1. Substitute this:</strong><br>
+                <code>mean_n = (1/n) * [ (n-1) * mean_n-1 + x_n ]</code></div>
+                
+                <div class="derivation-step"><strong>4. Distribute (1/n):</strong><br>
+                <code>mean_n = ((n-1)/n) * mean_n-1 + (1/n) * x_n</code></div>
+                
+                <div class="derivation-step"><strong>5. Rearrange terms to find the "update" rule. (n-1)/n = (n/n) - (1/n) = 1 - (1/n):</strong><br>
+                <code>mean_n = (1 - 1/n) * mean_n-1 + (1/n) * x_n</code><br>
+                <code>mean_n = mean_n-1 - (1/n) * mean_n-1 + (1/n) * x_n</code></div>
+                
+                <div class="derivation-step"><strong>6. Final Recurrence Relation:</strong><br>
+                <code>mean_n = mean_n-1 + (1/n) * (x_n - mean_n-1)</code></div>
+                
+                <p>This is the simplest form: the new mean is the old mean plus a small adjustment based on the "error" (<code>x_n - mean_n-1</code>) of the new value.</p>
+
+
+                <!-- Sezione 3: Derivazione Varianza -->
+                <h2>3. Derivation: Recurrence for Variance (Welford's Algorithm)</h2>
+                <p>We use a similar "online" approach for the sum of squared differences from the mean, <strong>M2_n</strong>. The variance is simply <strong>M2_n / (n-1)</strong> (for sample variance).</p>
+                <p>Let <strong>M2_n = Sum[ (x_i - mean_n)^2 ]</strong> for i=1 to n.</p>
+
+                <div class="derivation-step"><strong>1. Definition of M2_n:</strong><br>
+                <code>M2_n = Sum[ (x_i - mean_n)^2 ] + (x_n - mean_n)^2</code> (sum from i=1 to n-1)</div>
+                
+                <div class="derivation-step"><strong>2. This is complex because mean_n is different from mean_n-1. Let's use two terms:</strong><br>
+                <code>delta = x_n - mean_n-1</code><br>
+                <code>delta2 = x_n - mean_n</code></div>
+
+                <div class="derivation-step"><strong>3. From the mean derivation, we know:</strong><br>
+                <code>mean_n = mean_n-1 + delta / n</code><br>
+                <code>delta2 = x_n - (mean_n-1 + delta / n) = (x_n - mean_n-1) - delta / n = delta - delta / n = delta * (1 - 1/n)</code><br>
+                <strong>&rarr;</strong> <code>delta2 = delta * (n-1) / n</code></div>
+
+                <div class="derivation-step"><strong>4. We also need to update the existing sum terms (x_i - mean_n-1) to use mean_n:</strong><br>
+                <code>(x_i - mean_n) = (x_i - (mean_n-1 + delta / n)) = (x_i - mean_n-1) - (delta / n)</code></div>
+                
+                <div class="derivation-step"><strong>5. Now, we expand M2_n using this substitution (this is the hardest part):</strong><br>
+                <code>M2_n = Sum[ ((x_i - mean_n-1) - delta/n)^2 ] + delta2^2</code> (sum from i=1 to n-1)<br>
+                <code>M2_n = Sum[ (x_i - mean_n-1)^2 - 2*(delta/n)*(x_i - mean_n-1) + (delta/n)^2 ] + delta2^2</code></div>
+                
+                <div class="derivation-step"><strong>6. Distribute the summation:</strong><br>
+                Term 1: <code>Sum[ (x_i - mean_n-1)^2 ]</code> &rarr; This is exactly <strong>M2_n-1</strong>.<br>
+                Term 2: <code>-2*(delta/n) * Sum[ (x_i - mean_n-1) ]</code> &rarr; The sum of differences from the mean is <strong>0</strong>. This term vanishes.<br>
+                Term 3: <code>Sum[ (delta/n)^2 ]</code> &rarr; This is <strong>(n-1) * (delta/n)^2</strong>.</div>
+                
+                <div class="derivation-step"><strong>7. Combine the terms:</strong><br>
+                <code>M2_n = M2_n-1 + (n-1) * (delta/n)^2 + delta2^2</code><br>
+                Substitute <code>delta2 = delta * (n-1) / n</code>:<br>
+                <code>M2_n = M2_n-1 + (n-1) * (delta^2 / n^2) + (delta * (n-1) / n)^2</code><br>
+                <code>M2_n = M2_n-1 + (n-1) * delta^2 / n^2 + delta^2 * (n-1)^2 / n^2</code><br>
+                <code>M2_n = M2_n-1 + (delta^2 / n^2) * [ (n-1) + (n-1)^2 ]</code><br>
+                <code>M2_n = M2_n-1 + (delta^2 / n^2) * [ (n-1) * (1 + n - 1) ]</code><br>
+                <code>M2_n = M2_n-1 + (delta^2 / n^2) * [ (n-1) * n ]</code><br>
+                <code>M2_n = M2_n-1 + delta^2 * (n-1) / n</code></div>
+
+                <div class="derivation-step"><strong>8. This works! A simpler form uses <code>delta</code> and <code>delta2</code>:</strong><br>
+                <code>M2_n = M2_n-1 + delta * delta2</code><br>
+                (Proof: <code>delta * (delta * (n-1)/n) = delta^2 * (n-1)/n</code>. It matches.)</div>
+
+                <p><strong>Final Recurrence Relation:</strong><br>
+                1. <code>delta = x_n - mean_n-1</code><br>
+                2. <code>mean_n = mean_n-1 + delta / n</code><br>
+                3. <code>delta2 = x_n - mean_n</code><br>
+                4. <code>M2_n = M2_n-1 + delta * delta2</code></p>
+                
+                <!-- Sezione 4: Test Interattivo -->
+                <h2>4. Online Algorithm Implementation & Test</h2>
+                <p>Enter data points one by one. The statistics below will update incrementally using the derived "online" formulas. No data is stored in a list.</p>
+                
+                <div class="controls">
+                    <input type="number" id="data-input" placeholder="Enter a number...">
+                    <button id="submit-data">Add Data</button>
+                </div>
+                
+                <div id="stats-display">
+                    <h3>Current Statistics:</h3>
+                    <p><strong>Count (n):</strong> <span id="stat-count">0</span></p>
+                    <p><strong>Mean:</strong> <span id="stat-mean">0.00</span></p>
+                    <p><strong>Sample Variance (s^2):</strong> <span id="stat-variance">0.00</span></p>
+                    <p><strong>Sample Std. Dev. (s):</strong> <span id="stat-stddev">0.00</span></p>
+                    <p><strong>(M2 Value):</strong> <span id="stat-m2">0.00</span></p>
+                </div>
+                
+                <div id="data-log">
+                    <h3>Data Log (for reference):</h3>
+                    <ul id="data-list">
+                        <li>--- Log empty ---</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Script per lo sfondo binario (da homework4.html) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const bg = document.getElementById('binary-bg');
+            if (!bg) return;
+            
+            const numStrings = 100;
+            const screenWidth = window.innerWidth;
+            
+            for (let i = 0; i < numStrings; i++) {
+                const span = document.createElement('span');
+                let binaryString = '';
+                const stringLength = Math.floor(Math.random() * 50) + 20;
+                
+                for (let j = 0; j < stringLength; j++) {
+                    binaryString += Math.random() > 0.5 ? '1 ' : '0 ';
+                }
+                
+                span.textContent = binaryString;
+                span.style.left = `${Math.random() * screenWidth}px`;
+                span.style.top = `${Math.random() * -100}vh`; // Start above screen
+                span.style.animationDuration = `${Math.random() * 5 + 5}s`; // 5 to 10 seconds
+                span.style.animationDelay = `${Math.random() * 3}s`;
+                bg.appendChild(span);
+            }
+        });
+        
+        // === NUOVO SCRIPT PER L'ALGORITMO ONLINE ===
+        
+        // Oggetto per memorizzare lo stato O(1)
+        const onlineStats = {
+            n: 0,
+            mean: 0,
+            M2: 0 // Somma dei quadrati delle differenze
+        };
+
+        const submitButton = document.getElementById('submit-data');
+        const dataInput = document.getElementById('data-input');
+        
+        // Elementi display
+        const countDisplay = document.getElementById('stat-count');
+        const meanDisplay = document.getElementById('stat-mean');
+        const varianceDisplay = document.getElementById('stat-variance');
+        const stddevDisplay = document.getElementById('stat-stddev');
+        const m2Display = document.getElementById('stat-m2');
+        const dataList = document.getElementById('data-list');
+
+        submitButton.addEventListener('click', handleData);
+        dataInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                handleData();
+            }
+        });
+
+        function handleData() {
+            const value = dataInput.value;
+            if (value === '') return;
+            
+            const x = parseFloat(value);
+            if (isNaN(x)) {
+                alert('Invalid input. Please enter a number.');
+                return;
+            }
+            
+            updateOnlineStats(x);
+            displayStats();
+            updateLog(x);
+            
+            dataInput.value = '';
+            dataInput.focus();
+        }
+        
+        function updateOnlineStats(x) {
+            onlineStats.n += 1;
+            
+            const n = onlineStats.n;
+            const mean_n_minus_1 = onlineStats.mean;
+            
+            // 1. delta = x_n - mean_n-1
+            const delta = x - mean_n_minus_1;
+            
+            // 2. mean_n = mean_n-1 + delta / n
+            onlineStats.mean = mean_n_minus_1 + delta / n;
+            
+            // 3. delta2 = x_n - mean_n
+            const delta2 = x - onlineStats.mean;
+            
+            // 4. M2_n = M2_n-1 + delta * delta2
+            onlineStats.M2 = onlineStats.M2 + delta * delta2;
+        }
+        
+        function displayStats() {
+            const n = onlineStats.n;
+            
+            // La varianza campionaria non è definita per n < 2
+            const variance = n < 2 ? 0 : onlineStats.M2 / (n - 1);
+            const stddev = n < 2 ? 0 : Math.sqrt(variance);
+            
+            countDisplay.textContent = n;
+            meanDisplay.textContent = onlineStats.mean.toFixed(4);
+            varianceDisplay.textContent = variance.toFixed(4);
+            stddevDisplay.textContent = stddev.toFixed(4);
+            m2Display.textContent = onlineStats.M2.toFixed(4);
+        }
+        
+        function updateLog(x) {
+            if (onlineStats.n === 1) {
+                dataList.innerHTML = ''; // Pulisce il log iniziale
+            }
+            const li = document.createElement('li');
+            li.textContent = `[n=${onlineStats.n}] Added value: ${x}`;
+            dataList.prepend(li); // Aggiunge il nuovo valore in cima
+        }
+
+    </script>
+</body>
+</html>
