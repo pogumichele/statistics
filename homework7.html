@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homework 7: Security & Random Walks</title>
+    <style>
+        /* Stile base ereditato e mantenuto */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+            color: #00ff00;
+            background-color: #0d1a0d;
+            overflow-x: hidden;
+        }
+
+        /* Sfondo binario */
+        .binary-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.05;
+            filter: blur(0.5px);
+            transform: scale(1.05);
+        }
+        
+        .binary-background span {
+            position: absolute;
+            white-space: pre;
+            line-height: 15px;
+            font-size: 15px;
+            color: #00cc00;
+            animation: flow 10s linear infinite;
+        }
+        
+        @keyframes flow {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100vh); }
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        /* Finestra terminale */
+        .terminal-window {
+            background-color: rgba(0, 20, 0, 0.85);
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3), inset 0 0 10px rgba(0, 255, 0, 0.2);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            overflow: hidden;
+        }
+        
+        .terminal-header {
+            background-color: #003300;
+            padding: 8px 12px;
+            border-bottom: 1px solid #00ff00;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title-bar-buttons span {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 6px;
+            display: inline-block;
+            opacity: 0.8;
+        }
+
+        .title-bar-buttons .close { background-color: #ff5f56; }
+        .title-bar-buttons .minimize { background-color: #ffbd2e; }
+        .title-bar-buttons .maximize { background-color: #27c93f; }
+
+        .terminal-body {
+            padding: 20px;
+            max-height: 85vh;
+            overflow-y: auto;
+            font-size: 1.05em;
+            line-height: 1.5;
+        }
+
+        /* Tipografia */
+        h1, h2, h3 {
+            color: #00ff00;
+            border-bottom: 1px solid #005500;
+            padding-bottom: 5px;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        h1 { font-size: 1.8em; text-align: center; margin-bottom: 20px; }
+        h2 { font-size: 1.4em; margin-top: 30px; }
+        h3 { font-size: 1.1em; margin-top: 20px; color: #00cc00; }
+
+        .derivation-step {
+            padding-left: 20px;
+            color: #00cc00;
+            margin-bottom: 10px;
+            border-left: 2px solid #004400;
+        }
+
+        code {
+            background-color: #002200;
+            color: #aaffaa;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* Glitch */
+        .glitch {
+            font-weight: bold;
+            text-transform: uppercase;
+            position: relative;
+            text-shadow: 0.05em 0 0 rgba(0, 255, 0, 0.75), -0.025em -0.05em 0 rgba(255, 0, 0, 0.75), 0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+            animation: glitch 500ms infinite;
+        }
+
+        @keyframes glitch {
+            0% { text-shadow: 0.05em 0 0 rgba(0, 255, 0, 0.75), -0.05em -0.025em 0 rgba(255, 0, 0, 0.75), -0.025em 0.05em 0 rgba(0, 0, 255, 0.75); }
+            49% { text-shadow: -0.05em -0.025em 0 rgba(0, 255, 0, 0.75), 0.025em 0.025em 0 rgba(255, 0, 0, 0.75), -0.05em -0.05em 0 rgba(0, 0, 255, 0.75); }
+            50% { text-shadow: 0.025em 0.05em 0 rgba(0, 255, 0, 0.75), 0.05em 0 0 rgba(255, 0, 0, 0.75), 0 -0.05em 0 rgba(0, 0, 255, 0.75); }
+            100% { text-shadow: -0.025em 0 0 rgba(0, 255, 0, 0.75), -0.025em -0.025em 0 rgba(255, 0, 0, 0.75), -0.025em -0.05em 0 rgba(0, 0, 255, 0.75); }
+        }
+
+        /* Scanlines */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 1000;
+            background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0));
+            background-size: 100% 4px;
+            animation: scan 10s linear infinite;
+        }
+
+        /* Controlli Simulazione */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #001100;
+            border: 1px dashed #005500;
+            align-items: center;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            font-size: 0.8em;
+            color: #00aa00;
+            margin-bottom: 5px;
+        }
+        
+        .controls input {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #002200;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 8px;
+            width: 100px;
+        }
+        
+        .controls button {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #004400;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 10px 20px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin-top: auto;
+        }
+        
+        .controls button:hover {
+            background-color: #00ff00;
+            color: #000000;
+            box-shadow: 0 0 15px #00ff00;
+        }
+
+        /* Canvas Styles */
+        .canvas-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        canvas {
+            background-color: #000500;
+            border: 1px solid #004400;
+            width: 100%;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.1);
+        }
+
+        .stats-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #001100;
+            border-left: 3px solid #00ff00;
+        }
+
+        .stat-item strong { color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="binary-background" id="binary-bg"></div>
+    <div class="scanlines"></div>
+
+    <div class="container">
+        <div class="terminal-window">
+            <div class="terminal-header">
+                <div class="title-bar-buttons">
+                    <span class="close"></span>
+                    <span class="minimize"></span>
+                    <span class="maximize"></span>
+                </div>
+                <div class="title-bar-text">HOMEWORK_7_SECURITY_SIMULATION</div>
+                <div>[root@gemini ~]</div>
+            </div>
+            <div class="terminal-body">
+                <h1 class="glitch">Homework 7</h1>
+                <h3 style="text-align: center;">Server Security Trajectories & Binomial Convergence</h3>
+
+                <h2>1. Theoretical Framework</h2>
+                <p>We model a server receiving weekly security updates. For each week <code>i</code> (step), there is an outcome <code>X_i</code> based on whether an attacker breaches the system.</p>
+                
+                <div class="derivation-step">
+                    <strong>1. The Probability Space:</strong><br>
+                    Let <code>p</code> be the probability of a breach (failure).<br>
+                    Let <code>q = 1 - p</code> be the probability of remaining secure (success).
+                </div>
+
+                <div class="derivation-step">
+                    <strong>2. The Random Walk (Score):</strong><br>
+                    If secure: Score +1.<br>
+                    If breached: Score -1.<br>
+                    The cumulative score after <code>n</code> weeks is: <code>S_n = Sum(X_i)</code> for i=1 to n.
+                </div>
+
+                <div class="derivation-step">
+                    <strong>3. Relation to Binomial Distribution:</strong><br>
+                    Let <code>k</code> be the number of secure weeks (successes). Then <code>n-k</code> is the number of breaches.<br>
+                    The final score is: <code>S_n = (+1)*k + (-1)*(n-k) = k - n + k = 2k - n</code>.<br>
+                    Since <code>k</code> follows a Binomial distribution <code>B(n, 1-p)</code>, the Score <code>S_n</code> is a linear transformation of a Binomial variable.
+                </div>
+
+                <div class="derivation-step">
+                    <strong>4. Convergence:</strong><br>
+                    As <code>n</code> and <code>m</code> (number of attackers/trajectories) diverge, the distribution of scores approaches a Normal distribution (by the Central Limit Theorem) centered at <code>n*(1-2p)</code>.
+                </div>
+
+                <h2>2. Simulation Parameters</h2>
+                <p>Configure the simulation to generate random trajectories for the attackers.</p>
+                
+                <div class="controls">
+                    <div class="input-group">
+                        <label>Weeks (n)</label>
+                        <input type="number" id="inp-n" value="50" min="10" max="1000">
+                    </div>
+                    <div class="input-group">
+                        <label>Attackers (m)</label>
+                        <input type="number" id="inp-m" value="1000" min="10" max="10000">
+                    </div>
+                    <div class="input-group">
+                        <label>Breach Prob. (p)</label>
+                        <input type="number" id="inp-p" value="0.5" step="0.1" min="0" max="1">
+                    </div>
+                    <button onclick="runSimulation()">>> EXECUTE_SIMULATION</button>
+                </div>
+
+                <div class="stats-panel">
+                    <div class="stat-item">Theoretical Mean: <span id="theo-mean">0.00</span></div>
+                    <div class="stat-item">Empirical Mean: <span id="emp-mean">0.00</span></div>
+                    <div class="stat-item">Theoretical StdDev: <span id="theo-std">0.00</span></div>
+                    <div class="stat-item">Empirical StdDev: <span id="emp-std">0.00</span></div>
+                </div>
+
+                <h2>3. Visualization</h2>
+                <p><strong>Top:</strong> Random Walk Trajectories (Cumulative Score vs Time).<br>
+                <strong>Bottom:</strong> Final Score Distribution (Green Bars) vs Theoretical Probability (White Line).</p>
+                
+                <div class="canvas-container">
+                    <canvas id="walkCanvas" height="300"></canvas>
+                    <canvas id="distCanvas" height="250"></canvas>
+                </div>
+                
+                <p style="font-size: 0.8em; color: #555; text-align: center;">
+                    * Note: The histogram counts how many trajectories reached each specific total score.
+                </p>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === Background Effect (Binary Rain) ===
+        document.addEventListener('DOMContentLoaded', function() {
+            const bg = document.getElementById('binary-bg');
+            if (!bg) return;
+            const numStrings = 60; 
+            for (let i = 0; i < numStrings; i++) {
+                const span = document.createElement('span');
+                let binaryString = '';
+                const stringLength = Math.floor(Math.random() * 30) + 10;
+                for (let j = 0; j < stringLength; j++) binaryString += Math.random() > 0.5 ? '1 ' : '0 ';
+                span.textContent = binaryString;
+                span.style.left = `${Math.random() * 100}vw`;
+                span.style.top = `${Math.random() * -100}vh`;
+                span.style.animationDuration = `${Math.random() * 5 + 5}s`;
+                span.style.animationDelay = `${Math.random() * 5}s`;
+                bg.appendChild(span);
+            }
+            // Run initial simulation
+            runSimulation();
+        });
+
+        // === Simulation Logic ===
+        function runSimulation() {
+            // 1. Get Inputs
+            const n = parseInt(document.getElementById('inp-n').value); // Weeks (Steps)
+            const m = parseInt(document.getElementById('inp-m').value); // Attackers (Trajectories)
+            const p = parseFloat(document.getElementById('inp-p').value); // Prob of Breach (-1)
+            
+            // Prob of Secure (+1)
+            const q = 1 - p; 
+
+            // Data Structures
+            // We only store full paths for the first 100 to draw, to save memory/performance
+            const maxPathsToDraw = 200;
+            let paths = []; 
+            let finalScores = [];
+            let scoreCounts = {};
+
+            // Initialize score map
+            for(let k = -n; k <= n; k++) scoreCounts[k] = 0;
+
+            // 2. Run Loops (Monte Carlo)
+            for(let i = 0; i < m; i++) {
+                let currentScore = 0;
+                let path = [];
+                if(i < maxPathsToDraw) path.push(0);
+
+                for(let week = 0; week < n; week++) {
+                    // Random Step: if rand < p then -1 (breach), else +1 (secure)
+                    let step = (Math.random() < p) ? -1 : 1;
+                    currentScore += step;
+                    if(i < maxPathsToDraw) path.push(currentScore);
+                }
+
+                if(i < maxPathsToDraw) paths.push(path);
+                finalScores.push(currentScore);
+                
+                if(scoreCounts[currentScore] !== undefined) {
+                    scoreCounts[currentScore]++;
+                } else {
+                    scoreCounts[currentScore] = 1;
+                }
+            }
+
+            // 3. Statistics
+            // Theoretical Mean = n * (Prob(+1)*1 + Prob(-1)*(-1)) = n * (q - p) = n * (1 - 2p)
+            const theoMean = n * (1 - 2 * p);
+            // Variance of one step = E[X^2] - (E[X])^2 = 1 - (1-2p)^2
+            const oneStepVar = 1 - Math.pow(1 - 2*p, 2); 
+            const theoVar = n * oneStepVar;
+            const theoStd = Math.sqrt(theoVar);
+
+            // Empirical Stats
+            const sum = finalScores.reduce((a,b) => a+b, 0);
+            const empMean = sum / m;
+            const sumSqDiff = finalScores.reduce((a,b) => a + Math.pow(b - empMean, 2), 0);
+            const empStd = Math.sqrt(sumSqDiff / m);
+
+            // Update UI
+            document.getElementById('theo-mean').textContent = theoMean.toFixed(2);
+            document.getElementById('emp-mean').textContent = empMean.toFixed(2);
+            document.getElementById('theo-std').textContent = theoStd.toFixed(2);
+            document.getElementById('emp-std').textContent = empStd.toFixed(2);
+
+            // 4. Draw Visuals
+            drawWalks(paths, n, m);
+            drawDistribution(scoreCounts, n, m, p, theoMean, theoStd);
+        }
+
+        // === Drawing Function: Random Walks ===
+        function drawWalks(paths, n, m) {
+            const canvas = document.getElementById('walkCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Resize for high DPI
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * 2;
+            canvas.height = rect.height * 2;
+            ctx.scale(2, 2);
+
+            const w = rect.width;
+            const h = rect.height;
+
+            // Clear
+            ctx.fillStyle = '#000500';
+            ctx.fillRect(0, 0, w, h);
+
+            // Grid
+            ctx.strokeStyle = '#003300';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); // Zero line
+            ctx.stroke();
+
+            // Scale factors
+            const xScale = w / n;
+            // Y scale needs to fit range [-n, n] roughly, usually range is smaller due to sqrt(n) diffusion
+            // Let's fit [-n, n] just to be safe, or adjust dynamically.
+            // For better visuals, let's fit [-n/2, n/2] or use a dynamic max.
+            const yScale = h / (n * 1.5); 
+            const yOffset = h / 2;
+
+            // Draw Paths
+            paths.forEach(path => {
+                ctx.beginPath();
+                ctx.strokeStyle = `rgba(0, 255, 0, ${Math.max(0.1, 20/paths.length)})`;
+                ctx.lineWidth = 1;
+                
+                for(let i=0; i<path.length; i++) {
+                    const px = i * xScale;
+                    const py = yOffset - (path[i] * yScale);
+                    if(i===0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+            });
+
+            // Labels
+            ctx.fillStyle = '#00ff00';
+            ctx.font = '10px Courier New';
+            ctx.fillText(`Time (0 to ${n} weeks)`, w - 120, h - 10);
+            ctx.fillText(`Score`, 10, 20);
+        }
+
+        // === Drawing Function: Histogram vs Theoretical ===
+        function drawDistribution(counts, n, m, p, mean, std) {
+            const canvas = document.getElementById('distCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * 2;
+            canvas.height = rect.height * 2;
+            ctx.scale(2, 2);
+            const w = rect.width;
+            const h = rect.height;
+
+            ctx.fillStyle = '#000500';
+            ctx.fillRect(0, 0, w, h);
+
+            // Find Max Frequency for scaling
+            let maxFreq = 0;
+            for(let k in counts) if(counts[k] > maxFreq) maxFreq = counts[k];
+            if (maxFreq === 0) maxFreq = 1;
+
+            const barWidth = w / (2 * n + 1); // Total range is -n to +n (size 2n)
+            
+            // 1. Draw Bars (Empirical)
+            ctx.fillStyle = 'rgba(0, 255, 0, 0.6)';
+            for (let score = -n; score <= n; score++) {
+                const count = counts[score] || 0;
+                if(count > 0) {
+                    const barH = (count / maxFreq) * (h * 0.8);
+                    // Mapping x: score -n corresponds to 0, score +n corresponds to width
+                    // Normalize score from [-n, n] to [0, w]
+                    const x = ((score + n) / (2 * n)) * w;
+                    
+                    ctx.fillRect(x, h - barH, Math.max(1, barWidth), barH);
+                }
+            }
+
+            // 2. Draw Theoretical Curve (Normal Approximation)
+            // We draw a line graph over the histogram
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            // We iterate across pixels or small steps of score
+            let first = true;
+            for(let s = -n; s <= n; s += 0.5) {
+                // Normal PDF: f(x) = (1 / (std * sqrt(2pi))) * exp( -0.5 * ((x - mean)/std)^2 )
+                // We need to scale this probability to the counts (multiply by m)
+                // But since we have discrete steps of size 2 (only odd or only even scores possible per parity),
+                // the probability mass at a point is approx 2 * PDF? 
+                // Actually, let's just normalize to the max height of the curve to the maxFreq for visual comparison.
+                
+                const x = ((s + n) / (2 * n)) * w;
+                
+                // Gaussian calculation
+                const exponent = -0.5 * Math.pow((s - mean) / std, 2);
+                let prob = (1 / (std * Math.sqrt(2 * Math.PI))) * Math.exp(exponent);
+                
+                // The empirical histogram bins have a width of 2 (parity), so we multiply prob by 2 
+                // to get probability mass for that discrete step, then by m for count.
+                let theoryCount = prob * 2 * m; 
+
+                // Scale to canvas height based on the same maxFreq we used for bars
+                // (This aligns the Y-axis so they are comparable)
+                const y = h - (theoryCount / maxFreq) * (h * 0.8);
+
+                if(first) { ctx.moveTo(x, y); first = false; }
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // Legend
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText("White Line: Theoretical Normal Dist.", 10, 20);
+            ctx.fillStyle = '#00ff00';
+            ctx.fillText("Green Bars: Simulation Counts", 10, 35);
+        }
+    </script>
+</body>
+</html>

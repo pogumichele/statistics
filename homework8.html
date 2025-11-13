@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homework 8: Mathematical Analogies</title>
+    <style>
+        /* --- STILE GLOBALE (Cyberpunk/Terminal) --- */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+            color: #00ff00;
+            background-color: #0d1a0d;
+            overflow-x: hidden;
+        }
+
+        /* Background Binario */
+        .binary-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.05;
+            filter: blur(0.5px);
+        }
+        .binary-background span {
+            position: absolute;
+            color: #00cc00;
+            animation: flow 10s linear infinite;
+        }
+        @keyframes flow { 0% { transform: translateY(-100%); } 100% { transform: translateY(100vh); } }
+
+        .container {
+            max-width: 1100px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        /* Finestra Terminale */
+        .terminal-window {
+            background-color: rgba(0, 20, 0, 0.9);
+            border: 1px solid #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+            border-radius: 5px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .terminal-header {
+            background-color: #003300;
+            padding: 8px 12px;
+            border-bottom: 1px solid #00ff00;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title-bar-buttons span {
+            display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-left: 6px;
+        }
+        .close { background: #ff5f56; } .minimize { background: #ffbd2e; } .maximize { background: #27c93f; }
+
+        .terminal-body {
+            padding: 25px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        /* Tipografia & Layout */
+        h1, h2, h3 {
+            color: #00ff00;
+            border-bottom: 1px solid #004400;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+        }
+        h1 { text-align: center; font-size: 2em; margin-bottom: 10px; }
+        
+        .glitch { animation: glitch 1s infinite; }
+        @keyframes glitch {
+            0% { text-shadow: 2px 0 #f00, -2px 0 #00f; }
+            99% { text-shadow: 2px 0 #f00, -2px 0 #00f; }
+            100% { text-shadow: -2px 0 #f00, 2px 0 #00f; }
+        }
+
+        p, li { line-height: 1.6; color: #ccffcc; }
+        strong { color: #fff; }
+        code { background: #002200; padding: 2px 5px; border-radius: 3px; color: #aaffaa; }
+
+        /* Grid Layout per il confronto */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .comparison-box {
+            border: 1px dashed #005500;
+            padding: 15px;
+            background: #001100;
+        }
+
+        /* Canvas & Visualizzazione */
+        .canvas-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        canvas {
+            border: 1px solid #004400;
+            background: #000500;
+            box-shadow: 0 0 10px rgba(0,255,0,0.1);
+        }
+
+        /* Pascal Triangle styling specific */
+        .pascal-row { text-align: center; font-size: 12px; height: 16px; white-space: nowrap;}
+        .pascal-num { display: inline-block; width: 30px; color: #00ff00; }
+        
+        .math-highlight {
+            color: #ffff00;
+            font-weight: bold;
+        }
+
+        .controls {
+            background: #001100;
+            padding: 15px;
+            border: 1px dashed #005500;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        button {
+            background: #003300; color: #00ff00; border: 1px solid #00ff00;
+            padding: 8px 16px; cursor: pointer; font-family: inherit;
+        }
+        button:hover { background: #00ff00; color: #000; }
+
+    </style>
+</head>
+<body>
+    <div class="binary-background" id="binary-bg"></div>
+
+    <div class="container">
+        <div class="terminal-window">
+            <div class="terminal-header">
+                <div class="title-bar-buttons">
+                    <span class="close"></span><span class="minimize"></span><span class="maximize"></span>
+                </div>
+                <div class="title-bar-text">HOMEWORK_8_ANALOGIES_SYS</div>
+                <div>[root@gemini ~]</div>
+            </div>
+            <div class="terminal-body">
+                <h1 class="glitch">Homework 8</h1>
+                <h3 style="text-align: center;">Bernoulli, Random Walks & Combinatorial Structures</h3>
+
+                <h2>1. Analogies: HW7 (Random Walk) vs HW8 (LLN/Bernoulli)</h2>
+                <p>We analyze the deep mathematical connections between the Server Security trajectory (Random Walk) and the classic Bernoulli Process leading to the Law of Large Numbers (LLN).</p>
+
+                <div class="comparison-grid">
+                    <div class="comparison-box">
+                        <h3>HW7: Server Security (Random Walk)</h3>
+                        <ul>
+                            <li><strong>Process:</strong> Cumulative sum of random steps $X_i \in \{-1, +1\}$.</li>
+                            <li><strong>Variable:</strong> $S_n = \sum X_i$ (Final Score).</li>
+                            <li><strong>Space:</strong> Range from $-n$ to $+n$.</li>
+                            <li><strong>Perspective:</strong> Focus on the <em>path</em> (trajectory) and diffusion over time.</li>
+                            <li><strong>Limit:</strong> Converges to Normal Distribution $N(0, n)$ (for p=0.5). Variance grows with $n$.</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-box">
+                        <h3>HW8: Bernoulli / LLN</h3>
+                        <ul>
+                            <li><strong>Process:</strong> Sum of successes $Y_i \in \{0, 1\}$.</li>
+                            <li><strong>Variable:</strong> $K_n = \sum Y_i$ (Count of Successes) or Mean $\bar{Y}_n$.</li>
+                            <li><strong>Space:</strong> Range from $0$ to $n$.</li>
+                            <li><strong>Perspective:</strong> Focus on the <em>proportion</em> (frequency) converging to probability $p$.</li>
+                            <li><strong>Limit:</strong> Relative frequency converges to $p$. Variance of the mean shrinks ($p(1-p)/n$).</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <p><strong>The Core Connection:</strong> Both are fundamentally <strong>Bernoulli Trials</strong>. <br>
+                If we map $\{0, 1\} \to \{-1, +1\}$ via the transformation $X = 2Y - 1$, the Random Walk is simply a shifted and scaled version of the Binomial count. The underlying combinatorics are identical.</p>
+
+                <h2>2. Mathematical Structures</h2>
+
+                <h3>A. Binomial Coefficients & Pascal's Triangle</h3>
+                <p>The number of ways to reach a specific score $k$ in a Random Walk (or $k$ successes in Bernoulli) is given by the <strong>Binomial Coefficient</strong> $\binom{n}{k}$.</p>
+                <p>This creates <strong>Pascal's Triangle</strong>. Each number is the sum of the two directly above it, exactly matching the logic of a Random Walk: to get to position $x$ at time $t$, you must have come from $x-1$ or $x+1$ at time $t-1$.</p>
+
+                <h3>B. The Fibonacci Connection</h3>
+                <p>While Pascal's triangle sums rows to $2^n$, summing the <em>diagonals</em> of Pascal's triangle yields the <span class="math-highlight">Fibonacci Sequence</span> ($1, 1, 2, 3, 5, 8...$). This connects probability paths to recursive growth patterns.</p>
+
+                <h2>3. Interactive Visualization: The Galton Board</h2>
+                <p>This simulation (Galton Board) physically demonstrates how individual Bernoulli trials (left/right bounces) accumulate to form the Binomial Distribution (and eventually the Gaussian Bell Curve).</p>
+
+                <div class="controls">
+                    <button onclick="dropBall()">>> DROP_SINGLE_PACKET</button>
+                    <button onclick="startStream()">>> START_DATA_STREAM</button>
+                    <button onclick="resetBoard()">>> RESET_SYSTEM</button>
+                    <br><br>
+                    <span>Packets Dropped: <strong id="counter">0</strong></span>
+                </div>
+
+                <div class="canvas-wrapper">
+                    <canvas id="galtonCanvas" width="600" height="500"></canvas>
+                </div>
+
+                <h3>4. Pascal's Triangle Generator</h3>
+                <p>Generating coefficients for $n=10$. Notice the symmetry.</p>
+                <div id="pascal-container" style="font-family: monospace; overflow-x: auto; background: #000; padding: 10px; border: 1px solid #004400;"></div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- BACKGROUND EFFECT ---
+        const bg = document.getElementById('binary-bg');
+        for(let i=0; i<50; i++){
+            let span = document.createElement('span');
+            span.textContent = Math.random() > 0.5 ? '1' : '0';
+            span.style.left = Math.random()*100 + 'vw';
+            span.style.top = Math.random()*-100 + 'vh';
+            span.style.animationDuration = (Math.random()*5 + 5) + 's';
+            bg.appendChild(span);
+        }
+
+        // --- GALTON BOARD SIMULATION ---
+        const canvas = document.getElementById('galtonCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const LEVELS = 12; // Rows of pegs
+        const START_X = canvas.width / 2;
+        const START_Y = 50;
+        const PEG_SPACING = 35;
+        const BALL_RADIUS = 4;
+        
+        let balls = [];
+        let bins = new Array(LEVELS + 1).fill(0);
+        let streaming = false;
+        let totalDropped = 0;
+
+        class Ball {
+            constructor() {
+                this.x = START_X;
+                this.y = START_Y - 20;
+                this.vx = 0;
+                this.vy = 0;
+                this.row = 0;
+                this.active = true;
+                this.targetBin = 0; // Just for tracking logic
+            }
+
+            update() {
+                if(!this.active) return;
+
+                // Gravity
+                this.vy += 0.5;
+                this.y += this.vy;
+                this.x += this.vx;
+
+                // Check collision with pegs
+                const pegY = START_Y + (this.row * PEG_SPACING);
+                
+                if (this.y >= pegY && this.row < LEVELS) {
+                    // Bounce logic (Bernoulli Trial: 50/50 Left or Right)
+                    const direction = Math.random() < 0.5 ? -1 : 1;
+                    
+                    // Visual "bounce"
+                    this.vy = -2; // Small bounce up
+                    this.vx = direction * (Math.random() * 1 + 1); // Move sideways
+                    
+                    // Snap x slightly to grid to ensure it goes down the right path
+                    // In a real physics engine this is emergent, here we guide it slightly
+                    
+                    this.row++;
+                }
+
+                // Bottom detection
+                if (this.row >= LEVELS && this.y > START_Y + LEVELS * PEG_SPACING) {
+                    this.active = false;
+                    // Calculate bin based on X position relative to center
+                    // A simple approximation:
+                    let binIndex = Math.floor((this.x - (START_X - (LEVELS * PEG_SPACING)/2)) / 30);
+                    // Clamp
+                    binIndex = Math.max(0, Math.min(LEVELS, Math.floor((this.x - (START_X - LEVELS * 15)) / 30) + 6 )); // Approx mapping
+                    
+                    // More precise mapping: The ball effectively took 'k' right turns.
+                    // Since visual physics is chaotic, let's just bin by x position.
+                    const binW = 30;
+                    const leftEdge = START_X - (LEVELS * binW)/2;
+                    let b = Math.floor((this.x - leftEdge) / binW);
+                    if(b < 0) b = 0;
+                    if(b > LEVELS) b = LEVELS;
+                    
+                    bins[b]++;
+                    totalDropped++;
+                    document.getElementById('counter').textContent = totalDropped;
+                }
+            }
+
+            draw() {
+                if(!this.active) return;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, BALL_RADIUS, 0, Math.PI * 2);
+                ctx.fillStyle = '#00ff00';
+                ctx.fill();
+            }
+        }
+
+        function drawBoard() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Pegs (Pascal Triangle Shape)
+            ctx.fillStyle = '#005500';
+            for (let r = 0; r < LEVELS; r++) {
+                const cols = r + 1;
+                const rowWidth = (cols - 1) * PEG_SPACING; // Rough width
+                // Visual spread is actually uniform in standard Galton
+                // Standard Galton: Pegs are offset.
+                // Row 0: 1 peg. Row 1: 2 pegs... 
+                
+                // Let's draw a simple staggered grid
+                for(let c = 0; c <= r; c++) {
+                    // x = Center + offset based on row and col
+                    // x = StartX + (col - row/2) * spacing
+                    const px = START_X + (c - r/2) * 30; 
+                    const py = START_Y + r * 30;
+                    
+                    ctx.beginPath();
+                    ctx.arc(px, py, 2, 0, Math.PI*2);
+                    ctx.fill();
+                }
+            }
+
+            // Draw Bins (Histogram)
+            const binY = START_Y + LEVELS * 30 + 20;
+            const binW = 30;
+            const leftEdge = START_X - (LEVELS * binW)/2;
+
+            for(let i=0; i<=LEVELS; i++) {
+                const h = bins[i] * 5;
+                const bx = leftEdge + i * binW;
+                
+                ctx.fillStyle = 'rgba(0, 255, 0, 0.5)';
+                ctx.fillRect(bx + 2, binY - h, binW - 4, h);
+                
+                ctx.fillStyle = '#fff';
+                ctx.font = '10px Courier';
+                if(bins[i] > 0) ctx.fillText(bins[i], bx + 8, binY - h - 5);
+            }
+
+            // Draw Balls
+            balls.forEach(b => { b.update(); b.draw(); });
+            
+            // Cleanup inactive balls
+            balls = balls.filter(b => b.active);
+
+            requestAnimationFrame(drawBoard);
+        }
+
+        // --- CONTROLS ---
+        function dropBall() {
+            balls.push(new Ball());
+        }
+
+        let streamInterval;
+        function startStream() {
+            if(streaming) return;
+            streaming = true;
+            streamInterval = setInterval(() => {
+                balls.push(new Ball());
+            }, 100);
+        }
+
+        function resetBoard() {
+            streaming = false;
+            clearInterval(streamInterval);
+            balls = [];
+            bins.fill(0);
+            totalDropped = 0;
+            document.getElementById('counter').textContent = 0;
+        }
+
+        drawBoard();
+
+        // --- PASCAL TRIANGLE GENERATOR ---
+        function generatePascal(n) {
+            const container = document.getElementById('pascal-container');
+            let triangle = [[1]];
+            
+            for(let i=1; i<n; i++) {
+                let prev = triangle[i-1];
+                let curr = [1];
+                for(let j=1; j<prev.length; j++) {
+                    curr.push(prev[j-1] + prev[j]);
+                }
+                curr.push(1);
+                triangle.push(curr);
+            }
+
+            let html = '';
+            triangle.forEach(row => {
+                html += `<div class="pascal-row">`;
+                row.forEach(num => {
+                    html += `<span class="pascal-num">${num}</span>`;
+                });
+                html += `</div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        generatePascal(10);
+
+    </script>
+</body>
+</html>
