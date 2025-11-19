@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homework 9: Axiomatic Probability</title>
+    <style>
+        /* --- STILE GLOBALE (Cyberpunk/Terminal) --- */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+            color: #00ff00;
+            background-color: #0d1a0d;
+            overflow-x: hidden;
+        }
+
+        /* Background Binario */
+        .binary-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.05;
+            filter: blur(0.5px);
+        }
+        .binary-background span {
+            position: absolute;
+            color: #00cc00;
+            animation: flow 10s linear infinite;
+        }
+        @keyframes flow { 0% { transform: translateY(-100%); } 100% { transform: translateY(100vh); } }
+
+        .container {
+            max-width: 1100px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        /* Finestra Terminale */
+        .terminal-window {
+            background-color: rgba(0, 20, 0, 0.9);
+            border: 1px solid #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+            border-radius: 5px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .terminal-header {
+            background-color: #003300;
+            padding: 8px 12px;
+            border-bottom: 1px solid #00ff00;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title-bar-buttons span {
+            display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-left: 6px;
+        }
+        .close { background: #ff5f56; } .minimize { background: #ffbd2e; } .maximize { background: #27c93f; }
+
+        .terminal-body {
+            padding: 25px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        /* Tipografia & Layout */
+        h1, h2, h3 {
+            color: #00ff00;
+            border-bottom: 1px solid #004400;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+        }
+        h1 { text-align: center; font-size: 2em; margin-bottom: 10px; }
+        
+        .glitch { animation: glitch 1s infinite; }
+        @keyframes glitch {
+            0% { text-shadow: 2px 0 #f00, -2px 0 #00f; }
+            99% { text-shadow: 2px 0 #f00, -2px 0 #00f; }
+            100% { text-shadow: -2px 0 #f00, 2px 0 #00f; }
+        }
+
+        p, li { line-height: 1.6; color: #ccffcc; }
+        strong { color: #fff; }
+        code { background: #002200; padding: 2px 5px; border-radius: 3px; color: #aaffaa; }
+        
+        /* Contenuti Matematici */
+        .math-block {
+            background: #001100;
+            border: 1px solid #004400;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+            color: #ffff00;
+            font-size: 1.1em;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Grid Layout per il confronto */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .comparison-box {
+            border: 1px dashed #005500;
+            padding: 15px;
+            background: #001100;
+            transition: all 0.3s ease;
+        }
+        .comparison-box:hover {
+            border-color: #00ff00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.1);
+        }
+
+        /* Canvas & Visualizzazione (Venn Diagram) */
+        .canvas-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+            position: relative;
+        }
+        canvas {
+            border: 1px solid #004400;
+            background: #000500;
+            box-shadow: 0 0 10px rgba(0,255,0,0.1);
+            max-width: 100%;
+        }
+
+        .controls {
+            background: #001100;
+            padding: 15px;
+            border: 1px dashed #005500;
+            margin-bottom: 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        input[type="range"] {
+            accent-color: #00ff00;
+            width: 150px;
+        }
+
+        button {
+            background: #003300; color: #00ff00; border: 1px solid #00ff00;
+            padding: 10px 20px; cursor: pointer; font-family: inherit;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+        button:hover { background: #00ff00; color: #000; box-shadow: 0 0 10px #00ff00; }
+        
+        #result-display {
+            margin-top: 15px;
+            font-size: 1.2em;
+            color: #ffff00;
+            padding: 10px;
+            border-top: 1px dotted #004400;
+            width: 100%;
+        }
+
+        /* Utility classes */
+        .text-center { text-align: center; }
+        .highlight { color: #ffff00; }
+        .section-divider { border-bottom: 1px dashed #004400; margin: 30px 0; }
+
+    </style>
+</head>
+<body>
+    <div class="binary-background" id="binary-bg"></div>
+
+    <div class="container">
+        <div class="terminal-window">
+            <div class="terminal-header">
+                <div class="title-bar-buttons">
+                    <span class="close"></span><span class="minimize"></span><span class="maximize"></span>
+                </div>
+                <div class="title-bar-text">SYS_HOMEWORK_9_AXIOMATICS</div>
+                <div>[root@kolmogorov ~]</div>
+            </div>
+            <div class="terminal-body">
+                <h1 class="glitch">Homework 9</h1>
+                <h3 style="text-align: center;">Interpretations & The Axiomatic Foundation</h3>
+
+                <!-- SECTION 1: INTERPRETATIONS -->
+                <h2>1. Resolving Inconsistencies</h2>
+                <p>Before Kolmogorov, probability was fragmented. The axiomatic approach provides a single grammatical structure for the language of chance.</p>
+
+                <div class="comparison-grid">
+                    <div class="comparison-box">
+                        <h3>Classical</h3>
+                        <ul>
+                            <li><strong>Origin:</strong> Laplace (Games of chance).</li>
+                            <li><strong>Idea:</strong> $N(A) / N(\Omega)$.</li>
+                            <li><strong>Flaw:</strong> Circular definition (requires "equiprobable" outcomes) & fails for infinite spaces.</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-box">
+                        <h3>Frequentist</h3>
+                        <ul>
+                            <li><strong>Origin:</strong> Von Mises (Data).</li>
+                            <li><strong>Idea:</strong> Limit of relative frequency as $n \to \infty$.</li>
+                            <li><strong>Flaw:</strong> Cannot assign probability to single, non-repeatable events (e.g., "nuclear war probability").</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-box">
+                        <h3>Subjectivist</h3>
+                        <ul>
+                            <li><strong>Origin:</strong> De Finetti/Savage.</li>
+                            <li><strong>Idea:</strong> Degree of belief / Betting odds.</li>
+                            <li><strong>Flaw:</strong> Lacks objectivity; purely internal consistency.</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-box">
+                        <h3 class="highlight">Axiomatic (Solution)</h3>
+                        <ul>
+                            <li><strong>Origin:</strong> Kolmogorov (1933).</li>
+                            <li><strong>Idea:</strong> Defines rules $P(\cdot)$ must follow, ignoring "what" probability *is*.</li>
+                            <li><strong>Result:</strong> Unifies all above as valid models within a consistent measure-theoretic framework.</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="section-divider"></div>
+
+                <!-- SECTION 2: MEASURE THEORY -->
+                <h2>2. Probability as Measure Theory</h2>
+                <p>Probability is Measure Theory with total mass = 1. The triplet $(\Omega, \mathcal{F}, P)$ is the foundation.</p>
+
+                <div class="math-block">
+                    <strong>Space:</strong> $\Omega$ (Set of outcomes)<br>
+                    <strong>Structure:</strong> $\mathcal{F}$ ($\sigma$-algebra of events)<br>
+                    <strong>Measure:</strong> $P: \mathcal{F} \to [0,1]$ with $P(\Omega)=1$
+                </div>
+
+                <ul>
+                    <li><strong>$\sigma$-algebra ($\mathcal{F}$):</strong> A collection of subsets closed under complement and countable union. It defines "what can be measured" (events).</li>
+                    <li><strong>Random Variable ($X$):</strong> Not a variable, but a function $X: \Omega \to \mathbb{R}$. It must be <em>measurable</em>: $X^{-1}(B) \in \mathcal{F}$ for any interval $B$. This links the abstract outcome to real numbers.</li>
+                </ul>
+
+                <div class="section-divider"></div>
+
+                <!-- SECTION 3: DERIVATIONS -->
+                <h2>3. Deriving Properties from Axioms</h2>
+                <p>Using the 3 Axioms (Non-negativity, Normalization, Countable Additivity):</p>
+
+                <h3>A. Subadditivity (Boole's Inequality)</h3>
+                <p>For any events $A, B$:</p>
+                <div class="math-block">
+                    $$P(A \cup B) \le P(A) + P(B)$$
+                </div>
+                <p><em>Derivation logic:</em> $A \cup B$ can be split into disjoint parts. $P(A \cup B) = P(A) + P(B) - P(A \cap B)$. Since $P(A \cap B) \ge 0$, the sum $P(A)+P(B)$ is an upper bound.</p>
+
+                <h3>B. Inclusion-Exclusion Principle</h3>
+                <p>The exact equality for unions. For two events:</p>
+                <div class="math-block">
+                    $$P(A \cup B) = P(A) + P(B) - P(A \cap B)$$
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- SECTION 4: INTERACTIVE SIMULATION -->
+                <h2>4. Interactive Lab: Inclusion-Exclusion</h2>
+                <p>Adjust the probabilities and the overlap to visualize how the Axioms enforce the inclusion-exclusion rule. Notice how $P(A \cup B)$ changes.</p>
+
+                <div class="controls">
+                    <div class="input-group">
+                        <label>P(A) [Radius]: <input type="range" id="sliderA" min="10" max="100" value="60"></label>
+                        <span id="valA">0.60</span>
+                    </div>
+                    <div class="input-group">
+                        <label>P(B) [Radius]: <input type="range" id="sliderB" min="10" max="100" value="60"></label>
+                        <span id="valB">0.60</span>
+                    </div>
+                    <div class="input-group">
+                        <label>Distance (Overlap): <input type="range" id="sliderDist" min="0" max="200" value="80"></label>
+                    </div>
+                    
+                    <button onclick="updateSimulation()">>> COMPUTE_AXIOMS</button>
+                    
+                    <div id="result-display">Adjust sliders to compute...</div>
+                </div>
+
+                <div class="canvas-wrapper">
+                    <canvas id="axiomCanvas" width="500" height="350"></canvas>
+                </div>
+
+                <p style="font-size: 0.8em; text-align: center; opacity: 0.7;">
+                    Note: Visual areas are approximate representations of probability mass.
+                </p>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- BACKGROUND ANIMATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const bg = document.getElementById('binary-bg');
+            for(let i=0; i<40; i++){
+                let span = document.createElement('span');
+                span.textContent = Math.random() > 0.5 ? '1' : '0';
+                span.style.left = Math.random()*100 + 'vw';
+                span.style.top = Math.random()*-100 + 'vh';
+                span.style.fontSize = (Math.random()*10 + 10) + 'px';
+                span.style.opacity = Math.random() * 0.5;
+                span.style.animationDuration = (Math.random()*10 + 5) + 's';
+                bg.appendChild(span);
+            }
+            updateSimulation(); // Initial draw
+        });
+
+        // --- SIMULATION LOGIC ---
+        const canvas = document.getElementById('axiomCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const sliderA = document.getElementById('sliderA');
+        const sliderB = document.getElementById('sliderB');
+        const sliderDist = document.getElementById('sliderDist');
+        const valA = document.getElementById('valA');
+        const valB = document.getElementById('valB');
+        const resDisplay = document.getElementById('result-display');
+
+        sliderA.oninput = () => { valA.textContent = (sliderA.value / 100).toFixed(2); updateSimulation(); };
+        sliderB.oninput = () => { valB.textContent = (sliderB.value / 100).toFixed(2); updateSimulation(); };
+        sliderDist.oninput = updateSimulation;
+
+        function updateSimulation() {
+            // 1. Get Values
+            // We treat the slider value (10-100) as a proxy for Probability (0.1 - 1.0)
+            // Visually, we map this to Radius.
+            const rA = parseInt(sliderA.value); 
+            const rB = parseInt(sliderB.value);
+            const dist = parseInt(sliderDist.value); // Distance between centers
+            
+            const pA = rA / 100;
+            const pB = rB / 100;
+
+            // 2. Clear Canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const cX = canvas.width / 2;
+            const cY = canvas.height / 2;
+
+            // Center points for circles
+            // Total distance is 'dist'. Shift circles apart from center.
+            const xA = cX - dist/2;
+            const xB = cX + dist/2;
+
+            // 3. Draw Circle A
+            ctx.beginPath();
+            ctx.arc(xA, cY, rA, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.3)'; // Yellow transparent
+            ctx.fill();
+            ctx.strokeStyle = '#ffff00';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 4. Draw Circle B
+            ctx.beginPath();
+            ctx.arc(xB, cY, rB, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 255, 0, 0.3)'; // Green transparent
+            ctx.fill();
+            ctx.strokeStyle = '#00ff00';
+            ctx.stroke();
+
+            // 5. Labels
+            ctx.fillStyle = '#fff';
+            ctx.font = "14px Courier New";
+            ctx.fillText("A", xA - 10, cY);
+            ctx.fillText("B", xB - 5, cY);
+
+            // 6. Calculate Intersection (Geometry)
+            // Intersection of two circles logic is complex for exact area, 
+            // but we can approximate the "Meaning" for the homework.
+            // If dist >= rA + rB, intersection is 0.
+            // If dist < |rA - rB|, one is inside other.
+            
+            let areaIntersect = 0;
+            let pIntersect = 0;
+
+            // Mathematical Area of Intersection of two circles
+            if (dist < rA + rB) {
+                // There is overlap
+                if (dist <= Math.abs(rA - rB)) {
+                    // One inside another
+                    pIntersect = Math.min(pA, pB);
+                } else {
+                    // Standard intersection formula
+                    const d = dist;
+                    const r1 = rA;
+                    const r2 = rB;
+                    
+                    const part1 = r1*r1 * Math.acos((d*d + r1*r1 - r2*r2)/(2*d*r1));
+                    const part2 = r2*r2 * Math.acos((d*d + r2*r2 - r1*r1)/(2*d*r2));
+                    const part3 = 0.5 * Math.sqrt((-d+r1+r2)*(d+r1-r2)*(d-r1+r2)*(d+r1+r2));
+                    
+                    const intersectionArea = part1 + part2 - part3;
+                    
+                    // Normalize this back to "Probability"
+                    // Max area (radius 100) = PI * 100^2 = 31415
+                    // We treat PI*100^2 as P=1 (approximately for visual scaling)
+                    // Actually, let's just use a heuristic ratio based on the visual area
+                    
+                    // Heuristic: pIntersect based on geometric overlap ratio relative to Unit Circle
+                    // Let's simplify: We are simulating P(A inter B). 
+                    // The code below calculates the exact geometric overlap area of the drawn circles.
+                    // To map this to probability, we assume P maps linearly to Area.
+                    
+                    // Area of circle A = PI * rA^2.
+                    // But we defined P(A) = rA / 100. This implies Linear Radius scaling, which means Area scales quadratically.
+                    // For probability Venn diagrams, usually Area represents Probability.
+                    // If we want P(A) = 0.5 to look "half size", we should scale radius by sqrt.
+                    // BUT for this homework visualization, simple radius scaling is more intuitive for users to "grab".
+                    
+                    // Let's calculate the Overlap Ratio of Circle A
+                    const areaA = Math.PI * rA * rA;
+                    const overlapRatioA = intersectionArea / areaA;
+                    
+                    // So P(A inter B) = P(A) * overlapRatioA
+                    pIntersect = pA * overlapRatioA;
+                }
+            }
+
+            // 7. Compute Union
+            // P(A U B) = P(A) + P(B) - P(Intersection)
+            const pUnion = pA + pB - pIntersect;
+
+            // Display
+            resDisplay.innerHTML = `
+                <div style="display:grid; grid-template-columns: 1fr 1fr; text-align:left; gap:10px;">
+                    <div>P(A): <span class="highlight">${pA.toFixed(2)}</span></div>
+                    <div>P(B): <span class="highlight">${pB.toFixed(2)}</span></div>
+                    <div>Overlap P(A∩B): <span class="highlight">${pIntersect.toFixed(2)}</span></div>
+                    <div style="grid-column: span 2; border-top: 1px solid #00ff00; padding-top:5px;">
+                        <strong>Union P(A∪B) = ${pUnion.toFixed(3)}</strong>
+                    </div>
+                </div>
+                <p style="font-size:0.8em; margin-top:5px;">
+                    ${pUnion > 1 ? "<span style='color:orange'>Warning: P > 1 (Visual circles exceed Sample Space 1.0)</span>" : "Valid Probability Space"}
+                </p>
+            `;
+
+            // Draw Intersection line/highlight center if overlapping
+            if (pIntersect > 0) {
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(cX, cY, 2, 0, Math.PI*2);
+                ctx.fill();
+            }
+        }
+    </script>
+</body>
+</html>

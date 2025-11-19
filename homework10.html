@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homework 10: Poisson Process & Measure Theory</title>
+    <style>
+        /* --- GLOBAL STYLE (Cyberpunk/Terminal) --- */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+            color: #00ff00;
+            background-color: #0d1a0d;
+            overflow-x: hidden;
+        }
+
+        /* Binary Background Animation */
+        .binary-background {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; pointer-events: none;
+            opacity: 0.05; filter: blur(0.5px);
+        }
+        .binary-background span {
+            position: absolute; color: #00cc00;
+            animation: flow 10s linear infinite;
+        }
+        @keyframes flow { 0% { transform: translateY(-100%); } 100% { transform: translateY(100vh); } }
+
+        .container {
+            max-width: 1100px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        /* Terminal Window Styling */
+        .terminal-window {
+            background-color: rgba(0, 20, 0, 0.95);
+            border: 1px solid #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+            border-radius: 5px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .terminal-header {
+            background-color: #003300;
+            padding: 8px 12px;
+            border-bottom: 1px solid #00ff00;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title-bar-buttons span {
+            display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-left: 6px;
+        }
+        .close { background: #ff5f56; } .minimize { background: #ffbd2e; } .maximize { background: #27c93f; }
+
+        .terminal-body {
+            padding: 25px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        /* Typography */
+        h1, h2, h3 {
+            color: #00ff00;
+            border-bottom: 1px solid #004400;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+            margin-top: 30px;
+        }
+        h1 { text-align: center; font-size: 2em; margin-top: 0; }
+        
+        p, li { line-height: 1.6; color: #ccffcc; }
+        strong { color: #fff; }
+        .highlight { color: #ffff00; font-weight: bold; }
+        
+        /* Math Blocks */
+        .math-block {
+            background: #001100;
+            border-left: 3px solid #00ff00;
+            padding: 15px;
+            margin: 15px 0;
+            color: #aaffaa;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+        }
+
+        /* Grid for Comparison */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+
+        .box {
+            border: 1px dashed #005500;
+            padding: 15px;
+            background: #000500;
+        }
+
+        /* Simulation Controls */
+        .controls {
+            background: #001100;
+            padding: 20px;
+            border: 1px dashed #005500;
+            margin: 20px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        button {
+            background: #003300; color: #00ff00; border: 1px solid #00ff00;
+            padding: 10px 20px; cursor: pointer; font-family: inherit;
+            font-weight: bold; text-transform: uppercase;
+            transition: all 0.2s;
+        }
+        button:hover { background: #00ff00; color: #000; box-shadow: 0 0 10px #00ff00; }
+
+        /* Canvas */
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        canvas {
+            background: #000500;
+            border: 1px solid #004400;
+            box-shadow: 0 0 10px rgba(0,255,0,0.1);
+        }
+
+        /* Stats Panel */
+        .stats-panel {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #ffff00;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="binary-background" id="binary-bg"></div>
+
+    <div class="container">
+        <div class="terminal-window">
+            <div class="terminal-header">
+                <div class="title-bar-buttons">
+                    <span class="close"></span><span class="minimize"></span><span class="maximize"></span>
+                </div>
+                <div class="title-bar-text">SYS_HOMEWORK_10_POISSON_LIMIT</div>
+                <div>[root@stochastic ~]</div>
+            </div>
+            <div class="terminal-body">
+                <h1>Homework 10</h1>
+                <h3 style="text-align: center;">Measure Theory & The Poisson Process</h3>
+
+                <!-- PART 1: THEORY RECAP -->
+                <h2>1. Foundations: Interpretations & Axioms</h2>
+                <div class="grid-2">
+                    <div class="box">
+                        <h3>Interpretations</h3>
+                        <ul>
+                            <li><strong>Classical:</strong> Symmetry-based ($N_A/N_{tot}$). Fails for infinite sets.</li>
+                            <li><strong>Frequentist:</strong> Long-run limit of relative frequency. Fails for single events.</li>
+                            <li><strong>Bayesian:</strong> Degree of belief. Subjective.</li>
+                            <li><strong>Geometric:</strong> Ratio of measures (Length/Area).</li>
+                        </ul>
+                    </div>
+                    <div class="box">
+                        <h3>Axiomatic Resolution</h3>
+                        <p>Kolmogorov (1933) resolved inconsistencies by treating probability as a <strong>measure</strong> with mass 1. It creates a syntax ruleset ($P \ge 0$, $P(\Omega)=1$, Additivity) that supports all interpretations without mandating "what" probability is.</p>
+                    </div>
+                </div>
+
+                <h2>2. Probability vs. Measure Theory</h2>
+                <p>Probability is simply Measure Theory on a normalized space $(\Omega, \mathcal{F}, P)$.</p>
+                <ul>
+                    <li><strong>Sample Space $\Omega$:</strong> The set of all points (analogous to the set $X$ in measure theory).</li>
+                    <li><strong>$\sigma$-algebra $\mathcal{F}$:</strong> The collection of "measurable" subsets (events). Ensures logical operations (NOT, AND, OR) yield valid events.</li>
+                    <li><strong>Random Variable:</strong> A <em>measurable function</em> $X: \Omega \to \mathbb{R}$. It maps abstract outcomes to real numbers so that the pre-image of any interval is an event in $\mathcal{F}$.</li>
+                </ul>
+
+                <h2>3. Axiomatic Derivations</h2>
+                <div class="math-block">
+                    <strong>Subadditivity (Boole's Inequality):</strong><br>
+                    $P(\cup A_i) \le \sum P(A_i)$<br>
+                    Derived by decomposing the union into disjoint sets $E_i = A_i \setminus (\cup_{j<i} A_j)$ and using countable additivity.
+                    <br><br>
+                    <strong>Inclusion-Exclusion (2 Events):</strong><br>
+                    $P(A \cup B) = P(A) + P(B) - P(A \cap B)$<br>
+                    Since $A \cup B = A \cup (B \setminus A)$ (disjoint), $P(A \cup B) = P(A) + P(B \setminus A)$.<br>
+                    Also $B = (B \cap A) \cup (B \setminus A)$, so $P(B \setminus A) = P(B) - P(A \cap B)$. Substitute to prove.
+                </div>
+
+                <!-- PART 2: SIMULATION -->
+                <h2>4. Simulation: The Poisson Limit</h2>
+                <p>
+                    We simulate a counting process on interval $T=1$. We divide $T$ into $n$ bins.
+                    In each bin of width $\Delta t = 1/n$, a success occurs with prob $p = \lambda/n$.
+                    This approximates a continuous arrival process.
+                </p>
+
+                <div class="controls">
+                    <div class="input-group">
+                        <label>Rate ($\lambda$): <span id="lambdaVal" class="highlight">5</span></label>
+                        <input type="range" id="lambdaSlider" min="1" max="20" value="5" step="1">
+                    </div>
+                    <div class="input-group">
+                        <label>Subintervals ($n$): <span id="nVal" class="highlight">100</span></label>
+                        <input type="range" id="nSlider" min="10" max="2000" value="100" step="10">
+                    </div>
+                    <button onclick="runSimulation()">>> EXECUTE_PROCESS</button>
+                </div>
+
+                <div class="stats-panel">
+                    <span>Theoretical Mean: <span id="theoryMean">0</span></span>
+                    <span>Actual Count: <span id="actualCount">0</span></span>
+                    <span>Process: Poisson($\lambda$)</span>
+                </div>
+
+                <div class="canvas-container">
+                    <canvas id="simCanvas" width="700" height="400"></canvas>
+                </div>
+
+                <h2>5. Analysis of the Process</h2>
+                <div class="box">
+                    <h3>What process is this?</h3>
+                    <p>As $n \to \infty$, this Binomial approximation ($Bin(n, \lambda/n)$) converges to a <strong>Poisson Process</strong>.</p>
+                    <ul>
+                        <li><strong>Distribution:</strong> The total count $N(T)$ follows a Poisson distribution $P(k) = e^{-\lambda T} (\lambda T)^k / k!$.</li>
+                        <li><strong>Independent Increments:</strong> Events in non-overlapping intervals are independent (by construction of our simulation).</li>
+                        <li><strong>Stationary Increments:</strong> The prob. of an event depends only on the interval length, not time $t$.</li>
+                        <li><strong>Role of $\lambda$:</strong> It is the <strong>intensity</strong> or rate. It represents the average number of events per unit time.</li>
+                        <li><strong>Inter-arrival Times:</strong> The time between successes converges to an Exponential distribution $Exp(\lambda)$.</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- BACKGROUND ANIMATION ---
+        const bg = document.getElementById('binary-bg');
+        for(let i=0; i<40; i++){
+            let span = document.createElement('span');
+            span.textContent = Math.random() > 0.5 ? '1' : '0';
+            span.style.left = Math.random()*100 + 'vw';
+            span.style.top = Math.random()*-100 + 'vh';
+            span.style.animationDuration = (Math.random()*10 + 5) + 's';
+            bg.appendChild(span);
+        }
+
+        // --- SIMULATION LOGIC ---
+        const lambdaSlider = document.getElementById('lambdaSlider');
+        const nSlider = document.getElementById('nSlider');
+        const lambdaDisplay = document.getElementById('lambdaVal');
+        const nDisplay = document.getElementById('nVal');
+        const theoryDisplay = document.getElementById('theoryMean');
+        const actualDisplay = document.getElementById('actualCount');
+        
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Update labels
+        lambdaSlider.oninput = () => lambdaDisplay.textContent = lambdaSlider.value;
+        nSlider.oninput = () => nDisplay.textContent = nSlider.value;
+
+        function runSimulation() {
+            const lambda = parseInt(lambdaSlider.value);
+            const n = parseInt(nSlider.value);
+            const p = lambda / n;
+            const width = canvas.width;
+            const height = canvas.height;
+
+            // 1. Generate Data
+            let events = [];
+            let count = 0;
+            
+            // Simulate n subintervals
+            for(let i=0; i<n; i++) {
+                if(Math.random() < p) {
+                    count++;
+                    // Time t goes from 0 to 1
+                    let t = i / n; 
+                    events.push(t);
+                }
+            }
+
+            // Update Stats
+            theoryDisplay.textContent = lambda; // Since T=1, Mean = lambda*T = lambda
+            actualDisplay.textContent = count;
+
+            // 2. Draw Visualization
+            ctx.clearRect(0, 0, width, height);
+
+            // Layout:
+            // Top (0-100px): Timeline of arrivals (Striscia degli eventi)
+            // Bottom (100px-400px): Step Plot N(t) (Grafico a scala)
+
+            const margin = 40;
+            const plotW = width - 2 * margin;
+            const timeLineY = 60;
+            const chartTop = 120;
+            const chartHeight = height - chartTop - margin;
+            
+            // --- A. Timeline Draw ---
+            ctx.strokeStyle = '#005500';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(margin, timeLineY);
+            ctx.lineTo(width - margin, timeLineY);
+            ctx.stroke();
+
+            // Ticks 0 and 1
+            ctx.fillStyle = '#00ff00';
+            ctx.font = '12px Courier New';
+            ctx.fillText('t=0', margin, timeLineY - 10);
+            ctx.fillText('t=1', width - margin - 20, timeLineY - 10);
+
+            // Draw Events on Timeline
+            events.forEach(t => {
+                const x = margin + t * plotW;
+                ctx.strokeStyle = '#ffff00'; // Yellow for events
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x, timeLineY - 10);
+                ctx.lineTo(x, timeLineY + 10);
+                ctx.stroke();
+            });
+
+            // --- B. Step Plot N(t) ---
+            
+            // Axis
+            ctx.strokeStyle = '#00ff00';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            // Y axis
+            ctx.moveTo(margin, chartTop);
+            ctx.lineTo(margin, chartTop + chartHeight);
+            // X axis
+            ctx.lineTo(width - margin, chartTop + chartHeight);
+            ctx.stroke();
+
+            // Max Y value for scaling (approx lambda + 3 sigma is safe, or just max count + padding)
+            const maxCount = Math.max(count, lambda * 1.5) + 2;
+            
+            ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)'; // Cyan for the process line
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            let currentCount = 0;
+            let currentX = margin; // Starts at t=0
+            
+            ctx.moveTo(currentX, chartTop + chartHeight); // Start at (0,0)
+
+            events.forEach(t => {
+                const nextX = margin + t * plotW;
+                const y = chartTop + chartHeight - (currentCount / maxCount) * chartHeight;
+                
+                // Draw horizontal to the event time
+                ctx.lineTo(nextX, y);
+                
+                // Step up
+                currentCount++;
+                const nextY = chartTop + chartHeight - (currentCount / maxCount) * chartHeight;
+                ctx.lineTo(nextX, nextY);
+                
+                currentX = nextX;
+            });
+
+            // Finish line to t=1
+            const finalY = chartTop + chartHeight - (currentCount / maxCount) * chartHeight;
+            ctx.lineTo(width - margin, finalY);
+            ctx.stroke();
+
+            // Labels for Plot
+            ctx.fillStyle = '#00ff00';
+            ctx.fillText('N(t)', margin + 10, chartTop + 20);
+            ctx.fillText('Time (t)', width/2, height - 10);
+            
+            // Y Axis ticks (simplified)
+            for(let c=0; c<=maxCount; c+= Math.ceil(maxCount/5)) {
+                const y = chartTop + chartHeight - (c / maxCount) * chartHeight;
+                ctx.fillStyle = 'rgba(0,255,0,0.5)';
+                ctx.fillText(c, margin - 25, y + 4);
+                ctx.beginPath();
+                ctx.moveTo(margin - 5, y);
+                ctx.lineTo(margin, y);
+                ctx.stroke();
+            }
+        }
+
+        // Run on load
+        runSimulation();
+
+    </script>
+</body>
+</html>
