@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homework 11: Euler-Maruyama & Wiener Process</title>
+    <style>
+        /* --- GLOBAL STYLE (Cyberpunk/Terminal) - REUSED FROM YOUR HW10 --- */
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+            color: #00ff00; background-color: #0d1a0d;
+            overflow-x: hidden;
+        }
+        .container { max-width: 1100px; margin: 20px auto; padding: 20px; }
+        .terminal-window {
+            background-color: rgba(0, 20, 0, 0.95);
+            border: 1px solid #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+            border-radius: 5px;
+        }
+        .terminal-header {
+            background-color: #003300; padding: 8px 12px;
+            border-bottom: 1px solid #00ff00; display: flex;
+            justify-content: space-between; align-items: center;
+        }
+        .terminal-body { padding: 25px; }
+        h1, h2, h3 { color: #00ff00; border-bottom: 1px solid #004400; margin-top: 30px; }
+        h1 { text-align: center; margin-top: 0; }
+        .math-block {
+            background: #001100; border-left: 3px solid #00ff00;
+            padding: 15px; margin: 15px 0; color: #aaffaa; text-align: center;
+        }
+        .controls {
+            background: #001100; padding: 20px; border: 1px dashed #005500;
+            margin: 20px 0; display: flex; flex-wrap: wrap; gap: 20px;
+            justify-content: center; align-items: center;
+        }
+        .input-group { display: flex; flex-direction: column; align-items: center; }
+        button {
+            background: #003300; color: #00ff00; border: 1px solid #00ff00;
+            padding: 10px 20px; cursor: pointer; font-weight: bold;
+            transition: all 0.2s;
+        }
+        button:hover { background: #00ff00; color: #000; box-shadow: 0 0 10px #00ff00; }
+        canvas { background: #000500; border: 1px solid #004400; display: block; margin: 0 auto; }
+        .highlight { color: #ffff00; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="terminal-window">
+        <div class="terminal-header">
+            <div>SYS_HOMEWORK_11_WIENER_PROCESS</div>
+            <div>[root@stochastic ~]</div>
+        </div>
+        <div class="terminal-body">
+            <h1>Homework 11</h1>
+            <h3 style="text-align: center;">Euler-Maruyama & The Wiener Process</h3>
+
+            <h2>1. Theory: Stochastic Differential Equations (SDE)</h2>
+            <p>We solve an SDE of the form:</p>
+            <div class="math-block">
+                $dX_t = \mu(t, X_t)dt + \sigma(t, X_t)dW_t$
+            </div>
+            <p>Where $W_t$ is a Wiener process (Brownian Motion). To simulate this, we use the <strong>Euler-Maruyama method</strong>, a generalization of the Euler method for ODEs.</p>
+
+            <h2>2. Discretization</h2>
+            <div class="math-block">
+                $X_{t+\Delta t} = X_t + \mu \Delta t + \sigma \sqrt{\Delta t} \cdot Z_t$
+            </div>
+            <p>Where $Z_t \sim N(0,1)$ is a standard normal random variable generated via the <strong>Box-Muller Transform</strong>.</p>
+            
+            
+            <h2>3. Simulation Controls</h2>
+            <div class="controls">
+                <div class="input-group">
+                    <label>Steps ($N$): <span id="nVal" class="highlight">1000</span></label>
+                    <input type="range" id="nSlider" min="100" max="5000" value="1000" step="100">
+                </div>
+                <div class="input-group">
+                    <label>Drift ($\mu$): <span id="muVal" class="highlight">0</span></label>
+                    <input type="range" id="muSlider" min="-5" max="5" value="0" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>Diffusion ($\sigma$): <span id="sigmaVal" class="highlight">1</span></label>
+                    <input type="range" id="sigmaSlider" min="0.1" max="5" value="1" step="0.1">
+                </div>
+                <button onclick="runSimulation(true)">New Simulation</button>
+                <button onclick="runSimulation(false)">Add Path</button>
+            </div>
+
+            <canvas id="simCanvas" width="800" height="400"></canvas>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- UTILS ---
+    
+    // Box-Muller Transform for Normal Distribution N(0,1)
+    function getStandardNormal() {
+        let u = 0, v = 0;
+        while(u === 0) u = Math.random(); // Converting [0,1) to (0,1)
+        while(v === 0) v = Math.random();
+        return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+    }
+
+    // --- SETUP ---
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    const nSlider = document.getElementById('nSlider');
+    const muSlider = document.getElementById('muSlider');
+    const sigmaSlider = document.getElementById('sigmaSlider');
+
+    // Display updates
+    nSlider.oninput = () => document.getElementById('nVal').textContent = nSlider.value;
+    muSlider.oninput = () => document.getElementById('muVal').textContent = muSlider.value;
+    sigmaSlider.oninput = () => document.getElementById('sigmaVal').textContent = sigmaSlider.value;
+
+    function drawAxes() {
+        const w = canvas.width;
+        const h = canvas.height;
+        ctx.strokeStyle = '#004400';
+        ctx.lineWidth = 1;
+        
+        // Middle line (Zero)
+        ctx.beginPath();
+        ctx.moveTo(0, h/2);
+        ctx.lineTo(w, h/2);
+        ctx.stroke();
+    }
+
+    // --- EULER-MARUYAMA SIMULATION ---
+    function runSimulation(clear) {
+        const N = parseInt(nSlider.value);
+        const mu = parseFloat(muSlider.value);     // Drift
+        const sigma = parseFloat(sigmaSlider.value); // Diffusion
+        const T = 1.0; // Total time
+        const dt = T / N;
+        const sqrt_dt = Math.sqrt(dt);
+
+        const w = canvas.width;
+        const h = canvas.height;
+
+        if (clear) {
+            ctx.clearRect(0, 0, w, h);
+            drawAxes();
+        }
+
+        ctx.lineWidth = 1.5;
+        // Random neon color for each path
+        const colors = ['#00ff00', '#00ffff', '#ff00ff', '#ffff00', '#ff0000'];
+        ctx.strokeStyle = colors[Math.floor(Math.random() * colors.length)];
+        
+        ctx.beginPath();
+        
+        // Initial Condition X_0 = 0
+        let X = 0;
+        
+        // Map (0,0) to middle-left of canvas
+        // Scale Y so simulation fits (approx)
+        const scaleY = 50; 
+        const startY = h/2;
+
+        ctx.moveTo(0, startY);
+
+        for (let i = 1; i <= N; i++) {
+            // 1. Generate dW (Wiener Increment)
+            const dW = sqrt_dt * getStandardNormal();
+            
+            // 2. Euler-Maruyama Step: X_new = X_old + a*dt + b*dW
+            // Here: a = mu, b = sigma
+            const dX = mu * dt + sigma * dW;
+            X += dX;
+
+            // 3. Map to Canvas Coordinates
+            const plotX = (i / N) * w;
+            const plotY = startY - (X * scaleY); // Minus because Canvas Y is inverted
+
+            ctx.lineTo(plotX, plotY);
+        }
+        ctx.stroke();
+    }
+
+    // Init
+    drawAxes();
+    runSimulation(true);
+
+</script>
+</body>
+</html>
